@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# =============================================================================
+# hooks/patchset-created
+# =============================================================================
+# Gerrit hook: patchset 생성 시 자동으로 AI 코드 리뷰를 실행합니다.
+#
+# 설치 위치: <gerrit_site>/hooks/patchset-created
+# 실행 권한: chmod +x patchset-created
+#
+# Gerrit 이 전달하는 인수:
+#   --change          <change_id>
+#   --kind            <patchset_kind>   (REWORK / TRIVIAL_REBASE / …)
+#   --change-url      <url>
+#   --change-owner    <owner>
+#   --project         <project>
+#   --branch          <branch>
+#   --topic           <topic>          (선택)
+#   --uploader        <uploader>
+#   --commit          <hash>
+#   --patchset        <patchset_number>
+#   --change-owner-username <username>
+#   --uploader-username     <username>
+# =============================================================================
+
+set -euo pipefail
+
+# ── 이 스크립트의 실제 위치를 기준으로 프로젝트 루트 결정 ──────────────────
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$HOOK_DIR")"
+
+# ── 로그 설정 ─────────────────────────────────────────────────────────────────
+LOG_DIR="${PROJECT_DIR}/logs"
+mkdir -p "$LOG_DIR"
+HOOK_LOG="${LOG_DIR}/hook_$(date +%Y%m%d).log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [patchset-created] $*" | tee -a "$HOOK_LOG"
+}
+
+# ── 인수 파싱 ─────────────────────────────────────────────────────────────────
+CHANGE=""
+PATCHSET=""
+PROJECT=""
+BRANCH=""
+KIND=""
+CHANGE_URL=""
+OWNER=""
+UPLOADER=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --change)           CHANGE="$2";    shift 2 ;;
+        --patchset)         PATCHSET="$2";  shift 2 ;;
+        --project)          PROJECT="$2";   shift 2 ;;
+        --branch)           BRANCH="$2";    shift 2 ;;
+        --kind)             KIND="$2";      shift 2 ;;
+        --change-url)       CHANGE_URL="$2"; shift 2 ;;
+        --change-owner)     OWNER="$2";     shift 2 ;;
+        --uploader)         UPLOADER="$2";  shift 2 ;;
+        *)                              shift ;;
+    esac
+done
+
+log "========================================================"
+log "Hook 실행: change=${CHANGE}  patchset=${PATCHSET}"
+log "  project=${PROJECT}  branch=${BRANCH}  kind=${KIND}"
+log "  owner=${OWNER}  url=${CHANGE_URL}"
+log "========================================================"
+
+# ── 필수 값 검증 ──────────────────────────────────────────────────────────────
+if [[ -z "$CHANGE" || -z "$PATCHSET" ]]; then
+    log "ERROR: --change 또는 --patchset 인수가 누락되었습니다."
+    exit 1
+fi
+
+# ── TRIVIAL_REBASE / NO_CODE_CHANGE 는 건너뜀 ────────────────────────────────
+SKIP_KINDS="${REVIEWER_SKIP_KINDS:-TRIVIAL_REBASE NO_CODE_CHANGE}"
+for skip in $SKIP_KINDS; do
+    if [[ "$KIND" == "$skip" ]]; then
+        log "KIND=${KIND} — 리뷰 건너뜀 (SKIP_KINDS: $SKIP_KINDS)"
+        exit 0
+    fi
+done
+
+# ── 브랜치 필터 (환경변수 REVIEWER_BRANCHES 설정 시) ──────────────────────────
+if [[ -n "${REVIEWER_BRANCHES:-}" ]]; then
+    MATCHED=false
+    for allowed_branch in $REVIEWER_BRANCHES; do
+        if [[ "$BRANCH" == $allowed_branch ]]; then
+            MATCHED=true
+            break
+        fi
+    done
+    if [[ "$MATCHED" == "false" ]]; then
+        log "branch=${BRANCH} — 리뷰 대상 브랜치 아님 (REVIEWER_BRANCHES: $REVIEWER_BRANCHES)"
+        exit 0
+    fi
+fi
+
+# ── Python 인터프리터 결정 ────────────────────────────────────────────────────
+PYTHON="${REVIEWER_PYTHON:-}"
+if [[ -z "$PYTHON" ]]; then
+    # virtualenv 우선
+    if [[ -f "${PROJECT_DIR}/venv/bin/python3" ]]; then
+        PYTHON="${PROJECT_DIR}/venv/bin/python3"
+    elif command -v python3 &>/dev/null; then
+        PYTHON="python3"
+    elif command -v python &>/dev/null; then
+        PYTHON="python"
+    else
+        log "ERROR: Python 인터프리터를 찾을 수 없습니다."
+        exit 1
+    fi
+fi
+log "Python: $PYTHON"
+
+# ── 추가 옵션 ─────────────────────────────────────────────────────────────────
+EXTRA_ARGS=""
+
+# DRY-RUN 모드 (환경변수로 제어)
+if [[ "${REVIEWER_DRY_RUN:-false}" == "true" ]]; then
+    EXTRA_ARGS="$EXTRA_ARGS --dry-run"
+    log "DRY-RUN 모드 활성화"
+fi
+
+# NO-POST 모드 (리뷰 생성만 하고 Gerrit 등록 안함)
+if [[ "${REVIEWER_NO_POST:-false}" == "true" ]]; then
+    EXTRA_ARGS="$EXTRA_ARGS --no-post"
+    log "NO-POST 모드 활성화 (결과 파일만 생성)"
+fi
+
+# AI 제공자 오버라이드
+if [[ -n "${REVIEWER_PROVIDER:-}" ]]; then
+    EXTRA_ARGS="$EXTRA_ARGS --provider $REVIEWER_PROVIDER"
+fi
+
+# 상세 로그
+if [[ "${REVIEWER_VERBOSE:-false}" == "true" ]]; then
+    EXTRA_ARGS="$EXTRA_ARGS --verbose"
+fi
+
+# ── 리뷰어 실행 ───────────────────────────────────────────────────────────────
+REVIEWER="${PROJECT_DIR}/scripts/gerrit_reviewer.py"
+
+log "리뷰어 실행: $PYTHON $REVIEWER --change $CHANGE --patchset $PATCHSET $EXTRA_ARGS"
+
+"$PYTHON" "$REVIEWER" \
+    --change   "$CHANGE" \
+    --patchset "$PATCHSET" \
+    $EXTRA_ARGS \
+    >> "$HOOK_LOG" 2>&1
+
+EXIT_CODE=$?
+if [[ $EXIT_CODE -eq 0 ]]; then
+    log "리뷰어 정상 완료 (exit=0)"
+else
+    log "WARNING: 리뷰어 비정상 종료 (exit=${EXIT_CODE})"
+fi
+
+# Gerrit hook 은 exit code 에 관계없이 0 을 반환해야 patchset 업로드가 실패하지 않음
+exit 0

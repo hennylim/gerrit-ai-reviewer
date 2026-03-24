@@ -1,0 +1,10 @@
+# Gerrit AI 자동 코드 리뷰어 의존성
+# pip install -r requirements.txt
+
+# ── HTTP 요청 (Gerrit REST API) ────────────────────────────────────────────────
+requests>=2.31.0
+
+# ── AI SDK (사용할 제공자에 맞춰 설치) ────────────────────────────────────────
+anthropic>=0.40.0          # Claude  (provider: claude)
+google-genai>=1.0.0        # Gemini  (provider: gemini)
+openai>=1.30.0             # OpenAI  (provider: openai)

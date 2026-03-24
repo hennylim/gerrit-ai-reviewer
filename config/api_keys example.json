@@ -1,0 +1,15 @@
+{
+  "_comment": "AI 서비스 API 키 설정 — 실제 키로 교체 후 사용하세요",
+
+  "claude": {
+    "api_key": "YOUR_ANTHROPIC_API_KEY"
+  },
+
+  "gemini": {
+    "api_key": "YOUR_GEMINI_API_KEY"
+  },
+
+  "openai": {
+    "api_key": "YOUR_OPENAI_API_KEY"
+  }
+}

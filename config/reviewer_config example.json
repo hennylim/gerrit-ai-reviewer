@@ -1,0 +1,48 @@
+{
+  "_comment": "Gerrit AI 자동 코드 리뷰어 설정 파일",
+
+  "gerrit": {
+    "url":        "",
+    "username":   "",
+    "password":   "",
+    "auth_type":  "digest",
+    "timeout":    30,
+    "verify_ssl": true,
+    "version": "",
+    "_version_comment": "버전 자동 감지 실패 시 수동 지정. 예: '2.16.28' / '3.5.0'. 빈 문자열이면 자동 감지"
+  },
+
+  "ai": {
+    "provider":     "gemini",
+    "model":        "gemini-3.1-pro-preview",
+    "retry_count":  3,
+    "retry_delay":  5.0
+  },
+
+  "review": {
+    "max_files":     50,
+    "context_lines": 10,
+    "post_label":    true,
+    "notify":        "NONE"
+  },
+
+  "prompt": {
+    "language": "Korean",
+
+    "system": "당신은 10년 이상의 경력을 가진 시니어 소프트웨어 엔지니어입니다. 코드 품질, 보안, 성능, 유지보수성에 대해 깊이 있는 리뷰를 제공합니다.",
+
+    "template": "다음은 '{project}' 프로젝트의 '{branch}' 브랜치에 제출된 변경사항입니다.\n\n변경사항 제목: {subject}\n{focus_areas}\n\n아래 diff를 리뷰하고 {language}로 다음 항목에 대해 상세히 분석해 주세요:\n\n1. **버그 및 오류**: 잠재적 런타임 오류, 논리 오류, 엣지 케이스\n2. **보안 취약점**: SQL Injection, XSS, 인증/인가 문제, 민감정보 노출\n3. **성능**: 비효율적인 알고리즘, N+1 쿼리, 불필요한 연산\n4. **코드 품질**: 가독성, 명명 규칙, SOLID 원칙 준수\n5. **테스트**: 테스트 커버리지, 테스트 품질\n6. **개선 제안**: 더 나은 구현 방법이 있다면 예시 코드와 함께 제안\n\n---\n{diff}\n---\n\n리뷰를 작성할 때:\n- 문제가 없는 항목은 간단히 '문제없음'으로 표시\n- 심각도를 [CRITICAL/MAJOR/MINOR/INFO]로 표시\n- 구체적인 라인을 인용해 설명",
+
+    "focus_areas": [
+      "버그 및 오류 가능성",
+      "보안 취약점",
+      "성능 최적화",
+      "코드 품질 및 가독성"
+    ]
+  },
+
+  "output": {
+    "dir":     "output",
+    "log_dir": "logs"
+  }
+}
