@@ -16,6 +16,7 @@ Gerrit AI 자동 코드 리뷰 메인 실행 스크립트.
 """
 
 import argparse
+from dataclasses import dataclass, field
 import json
 import logging
 import os
@@ -409,6 +410,148 @@ def extract_score(text: str) -> int:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 파일 필터링
+# ──────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class FilterResult:
+    """파일 필터링 결과"""
+    review_files:   list          # 리뷰할 FileDiff 목록
+    skipped_files:  list[str]     # 건너뛴 파일 경로 목록
+    skip_reasons:   dict[str, str]# {파일경로: 건너뛴 이유}
+    total_skipped:  int           # 건너뛴 파일 수
+    skip_whole_change: bool       # True이면 변경 전체를 건너뜀
+    whole_skip_reason: str        # 전체 건너뜀 이유
+
+
+def filter_files(
+    diffs:      list,
+    review_cfg: dict,
+    total_file_count: int,
+) -> FilterResult:
+    """
+    설정 기반으로 리뷰 대상 파일을 필터링합니다.
+
+    전체 건너뜀 조건 (skip_whole_change=True):
+      - 총 파일 수 > skip_if_total_files_over
+      - 총 변경 줄 수 > skip_if_total_lines_over
+
+    파일별 건너뜀 조건:
+      - 확장자가 skip_extensions 에 포함
+      - 경로가 skip_path_patterns 에 매칭
+      - 변경 줄 수 > max_lines_per_file
+
+    모두 0 또는 빈 목록이면 필터링 없이 전체 리뷰합니다.
+    """
+    skip_total_files = int(review_cfg.get("skip_if_total_files_over", 0))
+    skip_total_lines = int(review_cfg.get("skip_if_total_lines_over", 0))
+    skip_exts        = [e.lower() for e in review_cfg.get("skip_extensions", [])]
+    skip_paths       = review_cfg.get("skip_path_patterns", [])
+    max_lines_file   = int(review_cfg.get("max_lines_per_file", 0))
+
+    total_lines = sum(d.lines_inserted + d.lines_deleted for d in diffs)
+
+    # ── 전체 커밋 건너뜀 검사 ─────────────────────────────────────────────────
+    if skip_total_files > 0 and total_file_count > skip_total_files:
+        reason = (
+            f"총 파일 수 {total_file_count}개가 "
+            f"skip_if_total_files_over({skip_total_files})를 초과합니다."
+        )
+        return FilterResult(
+            review_files=[], skipped_files=[d.filename for d in diffs],
+            skip_reasons={d.filename: reason for d in diffs},
+            total_skipped=len(diffs),
+            skip_whole_change=True, whole_skip_reason=reason,
+        )
+
+    if skip_total_lines > 0 and total_lines > skip_total_lines:
+        reason = (
+            f"총 변경 줄 수 {total_lines}줄이 "
+            f"skip_if_total_lines_over({skip_total_lines})를 초과합니다."
+        )
+        return FilterResult(
+            review_files=[], skipped_files=[d.filename for d in diffs],
+            skip_reasons={d.filename: reason for d in diffs},
+            total_skipped=len(diffs),
+            skip_whole_change=True, whole_skip_reason=reason,
+        )
+
+    # ── 파일별 건너뜀 검사 ───────────────────────────────────────────────────
+    review_files  = []
+    skipped_files = []
+    skip_reasons  = {}
+
+    for diff in diffs:
+        fname     = diff.filename
+        fname_low = fname.lower()
+        file_lines= diff.lines_inserted + diff.lines_deleted
+        reason    = None
+
+        # 확장자 검사
+        if skip_exts:
+            for ext in skip_exts:
+                if fname_low.endswith(ext):
+                    reason = f"건너뜀 확장자 {ext}"
+                    break
+
+        # 경로 패턴 검사
+        if reason is None and skip_paths:
+            for pattern in skip_paths:
+                if pattern.lower() in fname_low:
+                    reason = f"건너뜀 경로 패턴 '{pattern}'"
+                    break
+
+        # 파일당 최대 줄 수 검사
+        if reason is None and max_lines_file > 0 and file_lines > max_lines_file:
+            reason = (
+                f"변경 줄 수 {file_lines}줄이 "
+                f"max_lines_per_file({max_lines_file})를 초과합니다."
+            )
+
+        if reason:
+            skipped_files.append(fname)
+            skip_reasons[fname] = reason
+        else:
+            review_files.append(diff)
+
+    return FilterResult(
+        review_files=review_files,
+        skipped_files=skipped_files,
+        skip_reasons=skip_reasons,
+        total_skipped=len(skipped_files),
+        skip_whole_change=False,
+        whole_skip_reason="",
+    )
+
+
+def format_skip_notice(result: FilterResult) -> str:
+    """
+    건너뛴 파일 목록을 Gerrit 코멘트용 텍스트로 포맷합니다.
+    전체 건너뜀과 파일별 건너뜀 모두 처리합니다.
+    """
+    if not result.skipped_files:
+        return ""
+
+    lines = ["[자동 리뷰 제외 파일 안내]", ""]
+    if result.skip_whole_change:
+        lines.append(f"이 변경사항은 자동 리뷰에서 제외되었습니다.")
+        lines.append(f"사유: {result.whole_skip_reason}")
+    else:
+        lines.append(f"다음 {result.total_skipped}개 파일은 자동 리뷰에서 제외되었습니다.")
+        lines.append("")
+        for fname in result.skipped_files:
+            reason = result.skip_reasons.get(fname, "")
+            lines.append(f"  - {fname}")
+            if reason:
+                lines.append(f"    ({reason})")
+
+    lines.append("")
+    lines.append("전체 리뷰가 필요한 경우 수동으로 검토해 주세요.")
+    return "\n".join(lines)
+
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 핵심 리뷰 실행
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -468,12 +611,19 @@ def run_review(
         change.change_number, change.project, change.subject, change.owner
     )
 
-    # ── 3. diff 조회 ─────────────────────────────────────────────────────────
-    logger.info("[2/5] 파일 diff 조회 중...")
+    # ── 3. diff 조회 + 파일 필터링 ─────────────────────────────────────────────
+    logger.info("[2/5] 파일 diff 조회 및 필터링 중...")
     max_files    = review_cfg.get("max_files",    50)
     context_lines= review_cfg.get("context_lines", 10)
+
+    # 전체 파일 수 먼저 확인 (diff 내용 없이 목록만)
+    all_file_list = gerrit.get_changed_files(change_number, patchset_number)
+    total_file_count = len(all_file_list)
+    logger.info("  변경 파일 수: %d개 (max_files=%d)", total_file_count, max_files)
+
+    # max_files 제한 적용 후 diff 획득
     diffs = gerrit.get_all_diffs(change_number, patchset_number, max_files, context_lines)
-    logger.info("  총 %d 개 파일 diff 획득", len(diffs))
+    logger.info("  diff 획득: %d개 파일", len(diffs))
 
     if not diffs:
         logger.warning("변경된 파일이 없습니다. 리뷰를 건너뜁니다.")
@@ -491,6 +641,97 @@ def run_review(
             is_dry_run=dry_run,
             elapsed_seconds=time.time() - start,
         )
+
+    # ── 파일 필터링 ────────────────────────────────────────────────────────
+    filter_result = filter_files(diffs, review_cfg, total_file_count)
+
+    if filter_result.total_skipped > 0:
+        logger.info(
+            "  필터링 결과: 리뷰 %d개 / 제외 %d개",
+            len(filter_result.review_files), filter_result.total_skipped,
+        )
+        for fname, reason in filter_result.skip_reasons.items():
+            logger.info("    [제외] %s — %s", fname, reason)
+
+    # 전체 커밋이 제외 조건에 해당하는 경우
+    if filter_result.skip_whole_change:
+        skip_notice  = format_skip_notice(filter_result)
+        skip_summary = (
+            f"[자동 리뷰 제외]\n\n"
+            f"{filter_result.whole_skip_reason}\n\n"
+            f"변경 파일 수: {total_file_count}개\n"
+            f"변경 줄 수: {sum(d.lines_inserted + d.lines_deleted for d in diffs)}줄\n\n"
+            f"대량 변경사항은 자동 리뷰 범위를 초과하므로 수동 검토가 필요합니다."
+        )
+        logger.warning(
+            "전체 커밋 리뷰 제외: %s", filter_result.whole_skip_reason
+        )
+        result = ReviewResult(
+            change_number=change_number,
+            patchset_number=patchset_number,
+            project=change.project,
+            branch=change.branch,
+            subject=change.subject,
+            owner=change.owner,
+            ai_provider=provider,
+            ai_model=model or "skip",
+            review_summary=skip_summary,
+            file_reviews=[],
+            overall_score=0,
+            is_dry_run=dry_run,
+            elapsed_seconds=time.time() - start,
+        )
+        # 결과 파일 저장
+        formatter = ReviewFormatter(output_dir)
+        formatter.save_all(result)
+        # Gerrit 코멘트 등록 (제외 안내 메시지)
+        if not no_post:
+            review_input = ReviewInput(
+                message=skip_notice,
+                labels={},
+                tag="autogenerated:ai-reviewer",
+                notify=review_cfg.get("notify", "NONE"),
+            )
+            posted = gerrit.post_review(change_number, patchset_number, review_input)
+            result.gerrit_posted = posted
+        return result
+
+    # 리뷰 대상 파일이 없는 경우 (전부 제외됨)
+    diffs = filter_result.review_files
+    if not diffs:
+        skip_notice  = format_skip_notice(filter_result)
+        skip_summary = (
+            f"[자동 리뷰 제외]\n\n"
+            f"모든 파일({filter_result.total_skipped}개)이 자동 리뷰 제외 조건에 해당합니다.\n\n"
+            f"{skip_notice}"
+        )
+        logger.warning("리뷰 대상 파일 없음: 모든 파일이 필터링됨")
+        result = ReviewResult(
+            change_number=change_number,
+            patchset_number=patchset_number,
+            project=change.project,
+            branch=change.branch,
+            subject=change.subject,
+            owner=change.owner,
+            ai_provider=provider,
+            ai_model=model or "skip",
+            review_summary=skip_summary,
+            file_reviews=[],
+            overall_score=0,
+            is_dry_run=dry_run,
+            elapsed_seconds=time.time() - start,
+        )
+        formatter = ReviewFormatter(output_dir)
+        formatter.save_all(result)
+        if not no_post:
+            review_input = ReviewInput(
+                message=skip_notice,
+                labels={},
+                tag="autogenerated:ai-reviewer",
+                notify=review_cfg.get("notify", "NONE"),
+            )
+            gerrit.post_review(change_number, patchset_number, review_input)
+        return result
 
     # ── 4. AI 초기화 ─────────────────────────────────────────────────────────
     logger.info("[3/5] AI(%s) 초기화 중...", provider)
@@ -558,17 +799,50 @@ def run_review(
             "inline_comments": inline_comments,
         })
 
-    # ── 5b. 전체 요약 생성 ───────────────────────────────────────────────────
+    # ── 5b. 제외된 파일이 있으면 file_reviews 에 추가 (출력 파일용) ──────────
+    if filter_result.total_skipped > 0:
+        for fname in filter_result.skipped_files:
+            reason = filter_result.skip_reasons.get(fname, "")
+            file_reviews.append({
+                "filename":        fname,
+                "change_type":     "SKIPPED",
+                "lines_ins":       0,
+                "lines_del":       0,
+                "file_summary":    f"[자동 리뷰 제외] {reason}",
+                "review_text":     f"[자동 리뷰 제외] {reason}",
+                "inline_comments": [],
+                "skipped":         True,
+            })
+        logger.info(
+            "  제외 파일 %d개를 결과에 포함 (출력용)",
+            filter_result.total_skipped
+        )
+
+    # ── 5c. 전체 요약 생성 ───────────────────────────────────────────────────
     logger.info("  전체 요약 생성 중...")
-    summary_prompt = build_summary_prompt(file_reviews, change.subject, prompt_cfg)
+    # 제외 파일이 있으면 요약 프롬프트에 안내 추가
+    skip_note = ""
+    if filter_result.total_skipped > 0:
+        skip_note = (
+            f"\n\n[참고] 다음 {filter_result.total_skipped}개 파일은 "
+            f"자동 리뷰에서 제외되었습니다:\n"
+            + "\n".join(
+                f"  - {f} ({filter_result.skip_reasons.get(f, '')})"
+                for f in filter_result.skipped_files
+            )
+        )
+    summary_prompt = build_summary_prompt(
+        [fr for fr in file_reviews if not fr.get("skipped")],
+        change.subject, prompt_cfg
+    )
     summary_resp   = ai.chat(summary_prompt)
 
     if not summary_resp.success:
         review_summary = "전체 요약 생성 실패: " + (summary_resp.error or "")
         overall_score  = 0
     else:
-        review_summary = summary_resp.answer
-        overall_score  = extract_score(review_summary)
+        review_summary = summary_resp.answer + (skip_note if skip_note else "")
+        overall_score  = extract_score(summary_resp.answer)
 
     logger.info("  Code-Review 점수: %+d", overall_score)
 
