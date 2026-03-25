@@ -323,6 +323,50 @@ class GerritClient:
         resp.raise_for_status()
         return self._parse(resp.text) if resp.text.strip() else None
 
+    # ── 메시지 정제 유틸리티 ────────────────────────────────────────────────────
+
+    _EMOJI_REPLACEMENTS = {
+        # 심각도 아이콘 → 텍스트
+        "🔴": "[CRITICAL]", "🟠": "[MAJOR]", "🟡": "[MINOR]", "🔵": "[INFO]",
+        "⚪": "[NOTE]", "✅": "[OK]", "❌": "[FAIL]", "⚠️": "[WARN]", "⚠": "[WARN]",
+        # 박스/헤더 장식
+        "📂": "[FILES]", "📄": "[FILE]", "🤖": "[AI]",
+        "═": "=", "─": "-",
+    }
+
+    # Gerrit 구버전 안전 메시지 최대 길이 (8000자 초과 시 잘라냄)
+    _MSG_MAX_LEN = 8000
+
+    def _sanitize_message(self, text: str, max_len: int = None) -> str:
+        """
+        구버전 Gerrit 과 호환되도록 메시지를 정제합니다.
+
+        1. 등록된 이모지를 ASCII 텍스트로 교체
+        2. 나머지 비 BMP 문자(이모지 등) 제거
+        3. 지정 길이로 잘라냄
+        """
+        if max_len is None:
+            max_len = self._MSG_MAX_LEN
+
+        # 1단계: 알려진 이모지 치환
+        for emoji, replacement in self._EMOJI_REPLACEMENTS.items():
+            text = text.replace(emoji, replacement)
+
+        # 2단계: BMP 밖 문자(U+10000 이상, surrogate pair) 제거
+        #        Gerrit 2.13 Java 1.7 기반 JSON 파서가 surrogate pair 를 거부함
+        text = "".join(ch for ch in text if ord(ch) < 0x10000)
+
+        # 3단계: 길이 제한
+        if len(text) > max_len:
+            cutoff = text[:max_len]
+            # 단어 경계에서 자름
+            last_nl = cutoff.rfind("\n")
+            if last_nl > max_len * 0.8:
+                cutoff = cutoff[:last_nl]
+            text = cutoff + "\n\n[... 리뷰 전문은 output/ 디렉토리 파일을 확인하세요]"
+
+        return text
+
     # ── 페이로드 빌더 ─────────────────────────────────────────────────────────
 
     def _build_review_body(self, review: ReviewInput) -> dict:
@@ -484,20 +528,31 @@ class GerritClient:
         """
         코드 리뷰 코멘트를 Gerrit에 등록합니다.
 
-        GerritCapabilities 기반으로 페이로드를 처음부터 올바르게 구성합니다.
-        5xx 오류 발생 시 labels 필드를 제거한 후 1회 재시도합니다.
-        (구버전 Gerrit에서 labels 권한 문제로 500이 발생하는 경우 대응)
+        4단계 순차 시도:
+          1. FULL      : 버전 기반 최적 페이로드 (이모지 정제 + 길이 제한 적용)
+          2. NO-LABELS : labels 제거 (구버전 Gerrit 권한 문제 대응)
+          3. SAFE-MSG  : labels 제거 + 메시지 추가 정제 (더 엄격한 ASCII 안전 처리)
+          4. MINIMAL   : 최소 코멘트만 (연결 자체는 되는데 내용이 문제인 경우)
+
+        각 단계의 실패 원인을 상세 로그로 기록합니다.
 
         Returns:
-            True: 성공 (dry_run 포함), False: 실패
+            True: 성공 (dry_run 포함), False: 전체 단계 실패
         """
         inline_total = sum(len(v) for v in review.comments.values()) if review.comments else 0
 
         if self.dry_run:
             body = self._build_review_body(review)
+            # dry-run 에서도 정제 시뮬레이션
+            if "message" in body:
+                sanitized = self._sanitize_message(body["message"])
+                body["message"] = sanitized
             logger.info(
-                "[DRY-RUN] 리뷰 시뮬레이션 [%s]  인라인=%d개  label=%s  필드=%s",
-                self.caps.version_str, inline_total, review.labels, list(body.keys())
+                "[DRY-RUN] 리뷰 시뮬레이션 [%s]\n"
+                "  인라인=%d개  label=%s  필드=%s\n"
+                "  메시지 길이: %d자",
+                self.caps.version_str, inline_total, review.labels,
+                list(body.keys()), len(body.get("message", "")),
             )
             return True
 
@@ -507,59 +562,108 @@ class GerritClient:
                 self.caps.version_str
             )
 
-        body     = self._build_review_body(review)
         endpoint = f"changes/{change_number}/revisions/{patchset_number}/review"
 
-        def _try(b: dict, stage: str) -> bool:
-            """단일 POST 시도. 성공 True, 실패 False."""
+        def _post_attempt(b: dict, stage: str) -> bool:
+            """단일 POST 시도. 전송 전 페이로드 요약 로그."""
+            msg_len = len(b.get("message", ""))
+            logger.info(
+                "  [%s] 시도: 필드=%s  메시지=%d자  인라인=%d개",
+                stage, list(b.keys()), msg_len,
+                sum(len(v) for v in b.get("comments", {}).values()),
+            )
+            logger.debug("  [%s] 페이로드(앞 300자): %s",
+                         stage, json.dumps(b, ensure_ascii=False)[:300])
             try:
                 self._post(endpoint, b)
-                actual_inline = sum(len(v) for v in b.get("comments", {}).values())
                 logger.info(
-                    "리뷰 등록 완료 [Gerrit %s / %s]: change=%d ps=%d  인라인=%d개  label=%s",
-                    self.caps.version_str, stage,
-                    change_number, patchset_number,
-                    actual_inline, b.get("labels", "(생략)"),
+                    "  [%s] 등록 완료: change=%d ps=%d  label=%s",
+                    stage, change_number, patchset_number, b.get("labels", "(없음)"),
                 )
                 return True
             except requests.HTTPError as exc:
                 status    = exc.response.status_code if exc.response is not None else "?"
-                body_text = exc.response.text[:300]  if exc.response is not None else ""
+                resp_body = exc.response.text[:200]  if exc.response is not None else ""
                 logger.warning(
-                    "[%s] HTTP %s: %s  응답: %s",
-                    stage, status, exc, body_text
+                    "  [%s] 실패 HTTP %s — 응답: %s",
+                    stage, status, resp_body.strip(),
                 )
                 return False
 
-        # ── 1차 시도: 버전 기반 최적 페이로드 ───────────────────────────────
-        if _try(body, "FULL"):
+        # ── 기본 페이로드 구성 (버전 기반) + 메시지 정제 적용 ────────────────
+        base_body = self._build_review_body(review)
+        if "message" in base_body:
+            base_body["message"] = self._sanitize_message(base_body["message"])
+
+        # ── 1단계 FULL: 버전 최적 페이로드 ──────────────────────────────────
+        logger.info("Gerrit 리뷰 등록 시작 [%s]", self.caps.summary())
+        if _post_attempt(base_body, "FULL"):
             return True
 
-        # ── 2차 시도: labels 제거 (5xx 권한/서버 오류 대응) ─────────────────
-        if "labels" in body:
-            body_no_label = {k: v for k, v in body.items() if k != "labels"}
+        # ── 2단계 NO-LABELS: labels 제거 ─────────────────────────────────────
+        #    원인: Gerrit 2.13에서 Labels 권한 없을 때 403 대신 500 반환
+        logger.warning("2단계: labels 제거 후 재시도...")
+        body2 = {k: v for k, v in base_body.items() if k != "labels"}
+        if _post_attempt(body2, "NO-LABELS"):
             logger.warning(
-                "labels 필드 제거 후 재시도합니다 "
-                "(Gerrit %s 에서 labels 권한 문제 또는 Change 상태 오류).",
-                self.caps.version_str
+                "  => Code-Review 점수 미등록. "
+                "Gerrit 관리자에게 ai-reviewer 의 Label 투표 권한을 요청하세요."
             )
-            if _try(body_no_label, "NO-LABELS"):
-                logger.warning(
-                    "  Code-Review 점수(%s)는 등록되지 않았습니다. "
-                    "Gerrit 에서 ai-reviewer 계정의 Label 권한을 확인하세요.",
-                    review.labels
-                )
-                return True
+            return True
+
+        # ── 3단계 SAFE-MSG: 메시지 추가 정제 (더 엄격) ───────────────────────
+        #    원인: 이모지/특수문자/긴 메시지가 구버전 Jackson/Jersey 파싱 실패 유발
+        logger.warning("3단계: 메시지 추가 정제 후 재시도...")
+        safe_msg = self._sanitize_message(
+            base_body.get("message", ""),
+            max_len=3000,   # 더 엄격한 길이 제한
+        )
+        # ASCII + 한글 + 기본 구두점만 남기기 (BMP 전체 → Latin+한글로 축소)
+        safe_msg = "".join(
+            ch for ch in safe_msg
+            if (ord(ch) < 0x0100            # ASCII + Latin-1
+                or 0xAC00 <= ord(ch) <= 0xD7A3  # 한글 완성형
+                or 0x3130 <= ord(ch) <= 0x318F  # 한글 자모
+                or ch in (" \t\n\r.,;:()[]{}+-=/<>!?@#%&*_"))
+        )
+        body3 = {k: v for k, v in base_body.items() if k not in ("labels",)}
+        body3["message"] = safe_msg
+        if _post_attempt(body3, "SAFE-MSG"):
+            logger.warning(
+                "  => 메시지 정제 후 등록 성공. "
+                "원본 리뷰는 output/ 디렉토리를 확인하세요."
+            )
+            return True
+
+        # ── 4단계 MINIMAL: 최소 메시지만 ─────────────────────────────────────
+        #    원인: 메시지 내용 자체에 문제가 있을 때 최후 수단
+        logger.warning("4단계: 최소 코멘트만 등록 시도...")
+        minimal_msg = (
+            f"[AI Code Review] Change #{change_number} PS{patchset_number} "
+            f"review completed. Please check output directory for full report."
+        )
+        body4 = {"message": minimal_msg}
+        if _post_attempt(body4, "MINIMAL"):
+            logger.warning(
+                "  => 최소 코멘트만 등록됨. "
+                "전체 리뷰는 output/ 디렉토리 파일을 확인하세요."
+            )
+            return True
 
         # ── 최종 실패 ────────────────────────────────────────────────────────
         logger.error(
-            "리뷰 등록 최종 실패 [Gerrit %s] (change=%d ps=%d).",
-            self.caps.version_str, change_number, patchset_number
+            "리뷰 등록 최종 실패 (change=%d ps=%d) — 4단계 모두 실패.",
+            change_number, patchset_number
         )
         logger.error(
-            "  버전 감지 결과: %s  — 실제 버전과 다를 경우 "
-            "reviewer_config.json 에 gerrit.version 을 수동 지정하세요.",
-            self.caps.summary()
+            "  Gerrit 버전: %s", self.caps.summary()
+        )
+        logger.error(
+            "  확인 사항:\n"
+            "    1. ai-reviewer 계정이 해당 Change 에 코멘트 권한이 있는지 확인\n"
+            "    2. Change 상태가 NEW 인지 확인 (MERGED/ABANDONED 는 코멘트 불가)\n"
+            "    3. Gerrit 서버 로그에서 실제 오류 원인 확인\n"
+            "    4. reviewer_config.json 의 gerrit.version 을 수동 지정 시도"
         )
         return False
 
