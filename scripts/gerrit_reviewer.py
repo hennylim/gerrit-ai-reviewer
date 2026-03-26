@@ -207,36 +207,101 @@ def _extract_added_lines(diff_content: str) -> list[int]:
     return result
 
 
-def parse_inline_comments(ai_response: str, filename: str) -> tuple[str, list[dict]]:
+def _extract_json_text(raw: str) -> str:
     """
-    AI JSON 응답을 파싱해 (file_summary, inline_comments) 를 반환합니다.
-
-    Returns:
-        file_summary   : 파일 전체 요약 텍스트
-        inline_comments: [{"line": N, "side": "RIGHT", "severity": "...", "message": "..."}]
+    AI 응답에서 JSON 텍스트를 추출합니다.
+    마크다운 코드블록(```json...```) 제거, { ~ } 범위 추출을 수행합니다.
     """
     import re
-    import json as _json
+    text = raw.strip()
 
-    # JSON 블록 추출 (```json ... ``` 마크다운 감싸기 대응)
-    text = ai_response.strip()
+    # 마크다운 코드블록 제거 (닫힌 경우)
     md_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if md_match:
-        text = md_match.group(1)
+        return md_match.group(1)
 
-    # 첫 번째 { ~ 마지막 } 범위만 추출 (앞뒤 잡음 제거)
+    # 마크다운 코드블록 열렸지만 닫히지 않은 경우
+    md_open = re.search(r"```(?:json)?\s*(\{.*)", text, re.DOTALL)
+    if md_open:
+        text = md_open.group(1)
+
+    # 첫 { ~ 마지막 } 추출
     brace_match = re.search(r"\{.*\}", text, re.DOTALL)
     if brace_match:
-        text = brace_match.group(0)
+        return brace_match.group(0)
 
-    try:
-        data = _json.loads(text)
-    except (_json.JSONDecodeError, ValueError) as exc:
-        logger.warning("파일 '%s' AI 응답 JSON 파싱 실패: %s", filename, exc)
-        logger.debug("원본 응답:\n%s", ai_response[:500])
-        # 파싱 실패 시 전체 텍스트를 요약으로 사용
-        return ai_response, []
+    return text
 
+
+def _repair_json(text: str) -> str:
+    """
+    잘린 JSON을 복구합니다.
+    닫히지 않은 문자열, 배열, 객체를 닫아 파싱 가능하게 만듭니다.
+    """
+    # 열린 따옴표 수 확인: 홀수면 닫는 따옴표 추가
+    in_string = False
+    escaped   = False
+    result    = []
+    open_braces   = 0
+    open_brackets = 0
+
+    for ch in text:
+        if escaped:
+            escaped = False
+            result.append(ch)
+            continue
+        if ch == "\\" and in_string:
+            escaped = True
+            result.append(ch)
+            continue
+        if ch == '"':
+            in_string = not in_string
+        elif not in_string:
+            if ch == "{":
+                open_braces += 1
+            elif ch == "}":
+                open_braces -= 1
+            elif ch == "[":
+                open_brackets += 1
+            elif ch == "]":
+                open_brackets -= 1
+        result.append(ch)
+
+    repaired = "".join(result)
+
+    # 열린 문자열 닫기
+    if in_string:
+        repaired += '"'
+
+    # 열린 배열/객체 닫기 (역순)
+    repaired += "]" * max(0, open_brackets)
+    repaired += "}" * max(0, open_braces)
+
+    return repaired
+
+
+def _extract_summary_from_partial(text: str) -> str:
+    """
+    JSON 파싱이 완전히 실패한 경우, 정규식으로 file_summary 값만 추출합니다.
+    """
+    import re
+    # "file_summary": "..." 패턴
+    match = re.search(
+        r'"file_summary"\s*:\s*"((?:[^"\\]|\\.)*)"',
+        text, re.DOTALL
+    )
+    if match:
+        # JSON 이스케이프 디코딩
+        try:
+            import json as _j
+            return _j.loads(f'"{match.group(1)}"')
+        except Exception:
+            return match.group(1)
+    return ""
+
+
+def _build_result(data: dict, filename: str) -> tuple[str, list[dict]]:
+    """파싱된 JSON dict에서 (file_summary, inline_comments)를 구성합니다."""
     file_summary    = data.get("file_summary", "")
     raw_comments    = data.get("inline_comments", [])
     inline_comments = []
@@ -254,10 +319,8 @@ def parse_inline_comments(ai_response: str, filename: str) -> tuple[str, list[di
             if not message:
                 continue
 
-            # severity 아이콘 매핑
-            icon = {"CRITICAL": "🔴", "MAJOR": "🟠", "MINOR": "🟡", "INFO": "🔵"}.get(severity, "⚪")
+            icon    = {"CRITICAL": "🔴", "MAJOR": "🟠", "MINOR": "🟡", "INFO": "🔵"}.get(severity, "⚪")
             cat_str = f"[{category}] " if category else ""
-
             formatted_msg = f"{icon} [{severity}] {cat_str}{message}"
 
             inline_comments.append({
@@ -268,12 +331,83 @@ def parse_inline_comments(ai_response: str, filename: str) -> tuple[str, list[di
             })
         except (TypeError, ValueError) as exc:
             logger.debug("인라인 코멘트 항목 파싱 오류: %s — %s", c, exc)
-            continue
 
-    logger.debug(
-        "  파일 '%s': 인라인 코멘트 %d개 파싱 완료", filename, len(inline_comments)
-    )
+    logger.debug("  파일 '%s': 인라인 코멘트 %d개 파싱 완료", filename, len(inline_comments))
     return file_summary, inline_comments
+
+
+
+
+def parse_inline_comments(ai_response: str, filename: str) -> tuple[str, list[dict]]:
+    """
+    AI JSON 응답을 파싱해 (file_summary, inline_comments) 를 반환합니다.
+
+    파싱 전략 (순서대로 시도):
+      1. 정상 JSON 파싱
+      2. 마크다운 코드블록 / 앞뒤 잡음 제거 후 재파싱
+      3. 잘린 JSON 복구(repair) 후 재파싱
+      4. 정규식으로 file_summary 값만 추출
+      5. 위 모두 실패 시 → 원본 텍스트 대신 "[파싱 실패]" 오류 메시지 반환
+
+    Returns:
+        file_summary   : 파일 전체 요약 텍스트 (절대 JSON 코드블록이 포함되지 않음)
+        inline_comments: [{"line": N, "side": "RIGHT", "severity": "...", "message": "..."}]
+    """
+    import re
+    import json as _json
+
+    def _try_parse(s: str):
+        return _json.loads(s)
+
+    # ── 1단계: 원본 그대로 파싱 ─────────────────────────────────────────────
+    try:
+        data = _try_parse(ai_response.strip())
+        return _build_result(data, filename)
+    except (_json.JSONDecodeError, ValueError):
+        pass
+
+    # ── 2단계: JSON 텍스트 추출 후 파싱 ─────────────────────────────────────
+    json_text = _extract_json_text(ai_response)
+    try:
+        data = _try_parse(json_text)
+        return _build_result(data, filename)
+    except (_json.JSONDecodeError, ValueError) as exc:
+        logger.debug("2단계 파싱 실패 (%s): %s", filename, exc)
+
+    # ── 3단계: JSON 복구 후 파싱 ─────────────────────────────────────────────
+    repaired = _repair_json(json_text)
+    try:
+        data = _try_parse(repaired)
+        logger.info("  JSON 복구 성공: %s", filename)
+        return _build_result(data, filename)
+    except (_json.JSONDecodeError, ValueError) as exc:
+        logger.debug("3단계 복구 파싱 실패 (%s): %s", filename, exc)
+
+    # ── 4단계: 정규식으로 file_summary 만 추출 ──────────────────────────────
+    summary = _extract_summary_from_partial(json_text) or _extract_summary_from_partial(ai_response)
+    if summary:
+        logger.warning(
+            "파일 '%s' JSON 파싱 실패 — file_summary 부분 추출 성공", filename
+        )
+        logger.debug("원본 응답(앞 300자):\n%s", ai_response[:300])
+        return summary, []
+
+    # ── 5단계: 완전 실패 ─────────────────────────────────────────────────────
+    logger.warning(
+        "파일 '%s' AI 응답 파싱 완전 실패 — 오류 메시지로 대체합니다.", filename
+    )
+    logger.debug("원본 응답(앞 500자):\n%s", ai_response[:500])
+    fallback_summary = (
+        f"[AI 응답 파싱 실패]\n"
+        f"AI가 유효한 JSON 형식으로 응답하지 않았습니다.\n"
+        f"파일: {filename}\n"
+        f"원본 응답 일부: {ai_response[:200].strip()}"
+    )
+    # 원본 응답에 JSON이 없는 경우 일반 텍스트를 그대로 요약으로 활용
+    cleaned = ai_response.strip()
+    if not cleaned.startswith("{") and "```" not in cleaned and len(cleaned) < 1000:
+        return cleaned, []
+    return fallback_summary, []
 
 
 def build_gerrit_comments(file_reviews: list[dict]) -> dict:
