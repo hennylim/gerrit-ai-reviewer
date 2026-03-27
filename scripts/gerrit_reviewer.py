@@ -1225,16 +1225,40 @@ def run_review(
     file_reviews = []
     processed = 0
 
-    for b_idx, batch in enumerate(batches, 1):
+    def _review_single(diff):
+        single_prompt = build_inline_review_prompt(
+            subject    = change.subject,
+            project    = change.project,
+            branch     = change.branch,
+            diff       = diff,
+            prompt_cfg = prompt_cfg,
+        )
+        single_resp = ai.chat(single_prompt)
+
+        if not single_resp.success:
+            logger.warning("    개별 호출 실패 (%s): %s", diff.filename, single_resp.error)
+            return diff, f"[오류] AI 개별 리뷰 실패: {single_resp.error}", []
+
+        file_summary, inline_comments = parse_inline_comments(single_resp.answer, diff.filename)
+        logger.debug(
+            "    개별 응답: %d chars (%.1fs) → 코멘트 %d개",
+            len(single_resp.answer), single_resp.elapsed_seconds or 0, len(inline_comments),
+        )
+        return diff, file_summary, inline_comments
+
+    def _review_batch(batch, level=0):
+        if not batch:
+            return []
+
+        indent = "  " * level
         batch_files = ", ".join(d.filename.split("/")[-1] for d in batch[:3])
         if len(batch) > 3:
             batch_files += f" 외 {len(batch)-3}개"
         logger.info(
-            "  [배치 %d/%d] %d개 파일 리뷰 중: %s",
-            b_idx, len(batches), len(batch), batch_files,
+            "%s[배치 재시도 레벨 %d] %d개 파일 리뷰: %s",
+            indent, level, len(batch), batch_files,
         )
 
-        # 배치 프롬프트 생성
         prompt = build_batch_review_prompt(
             subject    = change.subject,
             project    = change.project,
@@ -1242,66 +1266,58 @@ def run_review(
             diffs      = batch,
             prompt_cfg = prompt_cfg,
         )
-        logger.debug("  배치 프롬프트 길이: %d chars", len(prompt))
-
         response = ai.chat(prompt)
 
         if not response.success:
-            logger.warning("  배치 %d/%d AI 응답 실패: %s", b_idx, len(batches), response.error)
+            logger.warning("%s배치 %d개 AI 응답 실패: %s", indent, len(batch), response.error)
+            if len(batch) == 1:
+                diff = batch[0]
+                return [ _review_single(diff) ]
+
+            # 실패 시 개별 폴백
+            results = []
             for diff in batch:
-                file_reviews.append({
-                    "filename":        diff.filename,
-                    "change_type":     diff.change_type,
-                    "lines_ins":       diff.lines_inserted,
-                    "lines_del":       diff.lines_deleted,
-                    "file_summary":    f"[오류] AI 배치 리뷰 실패: {response.error}",
-                    "review_text":     f"[오류] AI 배치 리뷰 실패: {response.error}",
-                    "inline_comments": [],
-                })
-            processed += len(batch)
-            continue
+                results.append(_review_single(diff))
+            return results
 
         logger.debug(
-            "  배치 %d/%d 응답: %d chars (%.1fs)",
-            b_idx, len(batches), len(response.answer), response.elapsed_seconds or 0,
+            "%s배치 응답: %d chars (%.1fs)",
+            indent, len(response.answer), response.elapsed_seconds or 0,
         )
 
-        # 배치 응답 파싱 → 파일별 (file_summary, inline_comments)
-        # None 반환 = 잘리거나 불량한 응답 → 개별 API 재호출로 폴백
         batch_results = parse_batch_response(response.answer, batch)
 
         if batch_results is None:
-            logger.warning(
-                "  배치 %d/%d 파싱 실패 → 파일별 개별 API 재호출 (총 %d개)",
-                b_idx, len(batches), len(batch),
-            )
-            batch_results = []
-            for f_idx, diff in enumerate(batch, 1):
-                logger.info(
-                    "    [개별] %d/%d 재호출: %s",
-                    f_idx, len(batch), diff.filename,
+            if len(batch) > 1:
+                logger.warning(
+                    "%s배치 응답 파싱 실패 또는 잘림 감지 (%d개) — 반으로 분할 재시도",
+                    indent, len(batch),
                 )
-                single_prompt = build_inline_review_prompt(
-                    subject    = change.subject,
-                    project    = change.project,
-                    branch     = change.branch,
-                    diff       = diff,
-                    prompt_cfg = prompt_cfg,
-                )
-                single_resp = ai.chat(single_prompt)
-                if not single_resp.success:
-                    logger.warning("    개별 재호출 실패 (%s): %s", diff.filename, single_resp.error)
-                    batch_results.append((f"[오류] AI 재호출 실패: {single_resp.error}", []))
-                else:
-                    s, c = parse_inline_comments(single_resp.answer, diff.filename)
-                    batch_results.append((s, c))
-                    logger.debug(
-                        "    개별 응답: %d chars (%.1fs) → 코멘트 %d개",
-                        len(single_resp.answer), single_resp.elapsed_seconds or 0, len(c),
-                    )
+                mid = len(batch) // 2
+                left  = _review_batch(batch[:mid], level=level+1)
+                right = _review_batch(batch[mid:], level=level+1)
+                return left + right
 
-        for diff, (file_summary, inline_comments) in zip(batch, batch_results):
+            diff = batch[0]
+            logger.warning("%s단일 파일 재시도도 실패 — 개별 호출로 폴백: %s", indent, diff.filename)
+            return [ _review_single(diff) ]
+
+        return [ (diff, file_summary, inline_comments)
+                 for diff, (file_summary, inline_comments) in zip(batch, batch_results) ]
+
+    for b_idx, batch in enumerate(batches, 1):
+        ### 배치 처리, 재시도 로직 _review_batch로 통합 ###
+        batch_items = _review_batch(batch)
+
+        for diff, file_summary, inline_comments in batch_items:
             processed += 1
+            if not inline_comments:
+                logger.info(
+                    "    [%d/%d] %s → 인라인 코멘트 없음, 결과에서 제외",
+                    processed, len(diffs), diff.filename,
+                )
+                continue
+
             sev_counts = {s: sum(1 for c in inline_comments if c["severity"] == s)
                           for s in ("CRITICAL", "MAJOR", "MINOR", "INFO")}
             logger.info(
@@ -1360,18 +1376,25 @@ def run_review(
                 for f in filter_result.skipped_files
             )
         )
-    summary_prompt = build_summary_prompt(
-        [fr for fr in file_reviews if not fr.get("skipped")],
-        change.subject, prompt_cfg
-    )
-    summary_resp   = ai.chat(summary_prompt)
 
-    if not summary_resp.success:
-        review_summary = "전체 요약 생성 실패: " + (summary_resp.error or "")
-        overall_score  = 0
+    reviewed_files = [fr for fr in file_reviews if not fr.get("skipped")]
+
+    if not reviewed_files:
+        logger.info("  인라인 코멘트가 있는 파일이 없어 전체 요약을 생성하지 않습니다.")
+        review_summary = "[AI 리뷰] 인라인 코멘트가 없는 파일만 존재합니다."
+        if skip_note:
+            review_summary += skip_note
+        overall_score = 0
     else:
-        review_summary = summary_resp.answer + (skip_note if skip_note else "")
-        overall_score  = extract_score(summary_resp.answer)
+        summary_prompt = build_summary_prompt(reviewed_files, change.subject, prompt_cfg)
+        summary_resp = ai.chat(summary_prompt)
+
+        if not summary_resp.success:
+            review_summary = "전체 요약 생성 실패: " + (summary_resp.error or "")
+            overall_score = 0
+        else:
+            review_summary = summary_resp.answer + (skip_note if skip_note else "")
+            overall_score = extract_score(summary_resp.answer)
 
     logger.info("  Code-Review 점수: %+d", overall_score)
 

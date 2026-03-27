@@ -225,6 +225,9 @@ def save_batch_summary(
         "failed":        len(failed),
         "total_elapsed": round(total_elapsed, 2),
         "results":       results,
+        "notes": {
+            "retention": "코멘트 없는 파일은 자동 제외됨, 배치 잘림 시 재시도 적용",
+        },
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -244,6 +247,11 @@ def save_batch_summary(
         f"  실패     : {len(failed)}",
         f"  소요 시간: {total_elapsed:.1f}초",
         "=" * 60,
+        "",
+        "[ 처리 정책 ]",
+        f"  · 코멘트 없는 파일: 결과에서 자동 제외",
+        f"  · 배치 잘림 감지: 반으로 분할 → 재시도 → 개별 호출 폴백",
+        f"  · 재시도 레벨: 최대 3단계 (배치 → 반분할 → 개별)",
         "",
         "[ 결과 목록 ]",
     ]
