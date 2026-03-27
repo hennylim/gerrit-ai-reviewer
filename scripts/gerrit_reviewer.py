@@ -544,6 +544,332 @@ def extract_score(text: str) -> int:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# 배치 처리 (여러 파일을 하나의 AI 요청으로 통합)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# AI 모델별 안전 토큰 한도 (문자 수 기준 근사값, 실제 토큰 < 문자 수)
+# 1 토큰 ≈ 3~4 문자 (한글 포함 평균)로 보수적으로 설정
+_MODEL_CHAR_LIMITS: dict[str, int] = {
+    # Gemini
+    "gemini-2.5-pro":              600_000,
+    "gemini-2.5-flash":            600_000,
+    "gemini-3.1-pro-preview":      600_000,
+    "gemini-2.0-flash":            400_000,
+    "gemini-1.5-pro":              400_000,
+    "gemini-1.5-flash":            400_000,
+    # Claude
+    "claude-opus-4-6":             600_000,
+    "claude-sonnet-4-6":           600_000,
+    "claude-opus-4-5":             600_000,
+    "claude-haiku-4-5-20251001":   300_000,
+    "claude-sonnet-3-7-20250219":  600_000,
+    "claude-sonnet-3-5-20241022":  600_000,
+    # OpenAI
+    "gpt-4o":                      400_000,
+    "gpt-4o-mini":                 400_000,
+    "gpt-4-turbo":                 400_000,
+}
+_DEFAULT_CHAR_LIMIT = 200_000   # 모델 미등록 시 보수적 기본값
+_BATCH_SIZE         = 10        # 한 배치당 최대 파일 수
+
+
+def _get_char_limit(model_name: str) -> int:
+    """모델명으로 문자 수 한도를 조회합니다. 부분 매칭 지원."""
+    if not model_name:
+        return _DEFAULT_CHAR_LIMIT
+    name_lower = model_name.lower()
+    # 정확히 일치
+    if name_lower in _MODEL_CHAR_LIMITS:
+        return _MODEL_CHAR_LIMITS[name_lower]
+    # 부분 일치 (예: "gemini-3.1-pro-preview-0325" → "gemini-3.1-pro-preview")
+    for key, limit in _MODEL_CHAR_LIMITS.items():
+        if key in name_lower or name_lower.startswith(key.split("-")[0]):
+            return limit
+    return _DEFAULT_CHAR_LIMIT
+
+
+def split_into_batches(
+    diffs:      list,
+    model_name: str,
+    batch_size: int = _BATCH_SIZE,
+) -> list[list]:
+    """
+    diff 목록을 배치로 분할합니다.
+
+    분할 기준 (둘 중 하나라도 초과 시 새 배치 시작):
+      1. 배치당 파일 수 > batch_size (기본 10)
+      2. 배치 누적 문자 수 > 모델 한도의 70% (안전 마진 30%)
+
+    Returns:
+        [[diff1, diff2, ...], [diff11, ...], ...]
+    """
+    char_limit    = int(_get_char_limit(model_name) * 0.70)
+    batches:  list[list]  = []
+    current:  list        = []
+    cur_chars: int        = 0
+
+    for diff in diffs:
+        diff_chars = len(diff.diff_content) + len(diff.filename) + 200  # 헤더 오버헤드 포함
+
+        # 현재 배치가 있고 한도 초과 예상 → 새 배치
+        if current and (
+            len(current) >= batch_size
+            or cur_chars + diff_chars > char_limit
+        ):
+            batches.append(current)
+            current   = []
+            cur_chars = 0
+
+        current.append(diff)
+        cur_chars += diff_chars
+
+    if current:
+        batches.append(current)
+
+    return batches
+
+
+def build_batch_review_prompt(
+    subject:    str,
+    project:    str,
+    branch:     str,
+    diffs:      list,
+    prompt_cfg: dict,
+) -> str:
+    """
+    여러 파일의 diff를 하나의 프롬프트로 통합하여 AI에게 배치 리뷰를 요청합니다.
+
+    응답 형식: 파일 수와 동일한 길이의 JSON 배열
+    [
+      {"filename": "...", "file_summary": "...", "inline_comments": [...]},
+      {"filename": "...", "file_summary": "...", "inline_comments": [...]},
+      ...
+    ]
+    """
+    focus_areas = prompt_cfg.get("focus_areas", [])
+    language    = prompt_cfg.get("language", "Korean")
+
+    focus_str = ""
+    if focus_areas:
+        focus_str = "중점 리뷰 영역:\n" + "\n".join(f"  - {a}" for a in focus_areas)
+
+    # 파일별 diff 블록 조합
+    file_blocks = []
+    for i, diff in enumerate(diffs, 1):
+        added_lines = _extract_added_lines(diff.diff_content)
+        line_hint   = ""
+        if added_lines:
+            line_hint = f"  추가된 라인 번호 (RIGHT): {added_lines[:30]}"
+
+        block = (
+            f"=== FILE {i}/{len(diffs)}: {diff.filename} ==="
+            f"  (변경 유형: {diff.change_type}, +{diff.lines_inserted}/-{diff.lines_deleted})\n"
+            f"{line_hint}\n"
+            f"--- DIFF START ---\n"
+            f"{diff.diff_content}\n"
+            f"--- DIFF END ---"
+        )
+        file_blocks.append(block)
+
+    files_section = "\n\n".join(file_blocks)
+
+    # 파일별 응답 스키마 예시
+    schema_example = "[\n" + ",\n".join(
+        f'  {{"filename": "{d.filename}", "file_summary": "<요약>", "inline_comments": [...]}}'
+        for d in diffs
+    ) + "\n]"
+
+    return f"""당신은 10년 이상 경력의 시니어 소프트웨어 엔지니어입니다.
+아래 {len(diffs)}개 파일의 코드 diff를 한 번에 리뷰하고, 반드시 JSON 배열 형식으로만 응답하세요.
+JSON 배열 외 다른 텍스트(설명, 마크다운 코드블록 등)는 절대 포함하지 마세요.
+
+프로젝트: {project}  브랜치: {branch}
+변경 제목: {subject}
+{focus_str}
+
+응답 JSON 배열 스키마 (파일 순서 유지, 총 {len(diffs)}개 원소):
+{schema_example}
+
+각 원소의 inline_comments 구조:
+{{
+  "line": <라인 번호(정수)>,
+  "side": "RIGHT",
+  "severity": "<CRITICAL|MAJOR|MINOR|INFO>",
+  "category": "<Security|Bug|Performance|Style|Test|Design>",
+  "message": "<{language}로 작성. 문제 설명 + 수정 방법. 300자 이내>"
+}}
+
+규칙:
+- 응답은 반드시 [{len(diffs)}개 원소 JSON 배열]로만, 다른 텍스트 없이
+- filename 은 위 FILE 헤더의 파일명 그대로 사용
+- inline_comments 는 실제 문제 있는 라인에만 작성 (없으면 빈 배열 [])
+- line 은 diff 에서 + 로 시작하는 줄의 실제 파일 라인 번호
+- 심각도: CRITICAL=보안/데이터손실, MAJOR=버그/성능, MINOR=코드품질, INFO=개선제안
+- 언어: {language}
+
+{files_section}"""
+
+
+# 배치 응답이 잘렸다고 판단하는 최소 문자 수 기준 (파일당 50자 미만이면 의심)
+_MIN_CHARS_PER_FILE = 50
+
+
+def _parse_json_lines(text: str) -> list | None:
+    """
+    JSON Lines 형식(한 줄에 객체 하나) 파싱을 시도합니다.
+    Gemini가 배열 대신 여러 JSON 객체를 연속으로 반환할 때 대응합니다.
+    """
+    import json as _j
+    objects = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line in ("{", "}", "[", "]"):
+            continue
+        line = line.rstrip(",")
+        try:
+            obj = _j.loads(line)
+            if isinstance(obj, dict):
+                objects.append(obj)
+        except _j.JSONDecodeError:
+            pass
+    return objects if objects else None
+
+
+def is_truncated_response(ai_response: str, n_files: int) -> bool:
+    """
+    AI 응답이 잘렸는지 휴리스틱으로 판단합니다.
+
+    잘린 응답 판단 기준:
+    - 파일당 평균 문자 수 < _MIN_CHARS_PER_FILE (너무 짧음)
+    - 응답이 JSON 시작 문자([ { `)로 시작하지 않음
+      (한글/영문 텍스트로 시작 = 응답 도중에 잘린 조각)
+
+    정상 응답 형식:
+    - [ ... ]  JSON 배열
+    - { ... }  단일 JSON 객체 (배열로 감싸 처리)
+    - [{...}\n{...}]  JSON Lines (각 줄이 { 로 시작)
+    - ```json [...]  마크다운 코드블록
+    """
+    avg = len(ai_response) / max(n_files, 1)
+    if avg < _MIN_CHARS_PER_FILE:
+        return True
+    text = ai_response.strip()
+    # JSON 시작 문자 확인: [, {, ` (마크다운)
+    first_char = text[0] if text else ""
+    if first_char not in ("[", "{", "`"):
+        return True
+    return False
+
+
+def parse_batch_response(
+    ai_response: str,
+    diffs:       list,
+) -> list[tuple[str, list]] | None:
+    """
+    배치 AI 응답(JSON 배열)을 파싱하여 파일별 (file_summary, inline_comments) 반환.
+
+    파싱 전략 (순서대로 시도):
+      1. JSON 배열 직접 파싱
+      2. 마크다운 코드블록 제거 후 파싱
+      3. 닫힌 괄호 보정(_repair_json) 후 파싱
+      4. JSON Lines 형식 파싱 (객체 여러 개를 개별 파싱)
+      5. 완전 실패 → None 반환 (호출자가 개별 API 재호출)
+
+    Returns:
+        [(file_summary, inline_comments), ...] 성공
+        None                                   파싱 실패 (개별 재호출 필요)
+    """
+    import json as _json
+    import re
+
+    n = len(diffs)
+
+    # ── 잘린 응답 조기 감지 ────────────────────────────────────────────────
+    if is_truncated_response(ai_response, n):
+        logger.warning(
+            "배치 응답이 잘렸거나 형식 불량 (%d자, 파일 %d개) → 개별 재호출 필요",
+            len(ai_response), n,
+        )
+        return None
+
+    def _build_results_from_list(data: list) -> list[tuple[str, list]]:
+        """파싱된 JSON 배열에서 파일별 결과 추출"""
+        results  = []
+        by_order = len(data) == n
+        if not by_order:
+            logger.warning(
+                "배치 응답 원소 수(%d) ≠ 요청 파일 수(%d) — filename 기반 매핑",
+                len(data), n,
+            )
+        for idx, diff in enumerate(diffs):
+            item = None
+            if by_order and idx < len(data):
+                item = data[idx]
+            else:
+                for d in data:
+                    if isinstance(d, dict) and d.get("filename", "") == diff.filename:
+                        item = d
+                        break
+            if item and isinstance(item, dict):
+                try:
+                    results.append(_build_result(item, diff.filename))
+                    continue
+                except Exception as exc:
+                    logger.debug("배치 항목 파싱 오류 (%s): %s", diff.filename, exc)
+            logger.debug("배치에서 '%s' 미발견 → 빈 결과", diff.filename)
+            results.append((f"[배치 파싱 실패] {diff.filename}", []))
+        return results
+
+    # ── 텍스트 전처리 ─────────────────────────────────────────────────────
+    text = ai_response.strip()
+
+    # 마크다운 코드블록 배열
+    md_match = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
+    if md_match:
+        text = md_match.group(1)
+    else:
+        arr_match = re.search(r"\[.*\]", text, re.DOTALL)
+        if arr_match:
+            text = arr_match.group(0)
+
+    # ── 1단계: 직접 파싱 ────────────────────────────────────────────────
+    try:
+        data = _json.loads(text)
+        if isinstance(data, list):
+            return _build_results_from_list(data)
+        if isinstance(data, dict):
+            return _build_results_from_list([data])
+    except (_json.JSONDecodeError, ValueError):
+        pass
+
+    # ── 2단계: 닫힌 괄호 보정 후 재파싱 ────────────────────────────────
+    try:
+        data = _json.loads(_repair_json(text))
+        if isinstance(data, list):
+            logger.info("배치 응답 JSON 복구 성공 (%d개 원소)", len(data))
+            return _build_results_from_list(data)
+        if isinstance(data, dict):
+            return _build_results_from_list([data])
+    except (_json.JSONDecodeError, ValueError) as exc:
+        logger.debug("배치 JSON 복구 파싱 실패: %s", exc)
+
+    # ── 3단계: JSON Lines 파싱 ─────────────────────────────────────────
+    objects = _parse_json_lines(ai_response)
+    if objects:
+        logger.info("배치 응답 JSON Lines 형식으로 파싱 성공 (%d개)", len(objects))
+        return _build_results_from_list(objects)
+
+    # ── 완전 실패 → None (호출자가 개별 재호출) ──────────────────────────
+    logger.warning(
+        "배치 응답 파싱 완전 실패 (%d자) → 개별 파일 API 재호출 필요",
+        len(ai_response),
+    )
+    logger.debug("배치 응답 앞 300자:\n%s", ai_response[:300])
+    return None
+
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # 파일 필터링
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -879,59 +1205,128 @@ def run_review(
     )
     logger.info("  AI 모델: %s", ai.model)
 
-    # ── 5. 파일별 AI 리뷰 (JSON 구조화 응답 + 인라인 코멘트 파싱) ─────────────
-    logger.info("[4/5] 파일별 AI 코드 리뷰 실행 중...")
-    file_reviews = []
-    for i, diff in enumerate(diffs, 1):
-        logger.info("  [%d/%d] 리뷰 중: %s (+%d/-%d)",
-                    i, len(diffs), diff.filename, diff.lines_inserted, diff.lines_deleted)
+    # ── 5. 배치 AI 코드 리뷰 ──────────────────────────────────────────────────
+    # 최대 10개 파일씩 하나의 AI 요청으로 통합하여 속도 최적화
+    # 모델 컨텍스트 한도 초과 시 자동 분할
+    batch_size = int(review_cfg.get("batch_size", _BATCH_SIZE))
+    batches = split_into_batches(diffs, ai.model, batch_size=batch_size)
+    logger.info(
+        "[4/5] 배치 AI 코드 리뷰 실행 중... (파일 %d개 → 배치 %d개, 모델 한도 %s chars)",
+        len(diffs), len(batches),
+        f"{_get_char_limit(ai.model):,}",
+    )
+    for b_idx, b_info in enumerate(
+        (f"배치 {i+1}/{len(batches)}: {len(b)}개 파일 [{', '.join(d.filename.split('/')[-1] for d in b[:3])}{'...' if len(b)>3 else ''}]"
+         for i, b in enumerate(batches)),
+        1
+    ):
+        pass  # 미리 생성 (로그용)
 
-        prompt = build_inline_review_prompt(
-            subject   = change.subject,
-            project   = change.project,
-            branch    = change.branch,
-            diff      = diff,
-            prompt_cfg= prompt_cfg,
+    file_reviews = []
+    processed = 0
+
+    for b_idx, batch in enumerate(batches, 1):
+        batch_files = ", ".join(d.filename.split("/")[-1] for d in batch[:3])
+        if len(batch) > 3:
+            batch_files += f" 외 {len(batch)-3}개"
+        logger.info(
+            "  [배치 %d/%d] %d개 파일 리뷰 중: %s",
+            b_idx, len(batches), len(batch), batch_files,
         )
-        logger.debug("  프롬프트 길이: %d chars", len(prompt))
+
+        # 배치 프롬프트 생성
+        prompt = build_batch_review_prompt(
+            subject    = change.subject,
+            project    = change.project,
+            branch     = change.branch,
+            diffs      = batch,
+            prompt_cfg = prompt_cfg,
+        )
+        logger.debug("  배치 프롬프트 길이: %d chars", len(prompt))
 
         response = ai.chat(prompt)
+
         if not response.success:
-            logger.warning("  AI 응답 실패 (%s): %s", diff.filename, response.error)
+            logger.warning("  배치 %d/%d AI 응답 실패: %s", b_idx, len(batches), response.error)
+            for diff in batch:
+                file_reviews.append({
+                    "filename":        diff.filename,
+                    "change_type":     diff.change_type,
+                    "lines_ins":       diff.lines_inserted,
+                    "lines_del":       diff.lines_deleted,
+                    "file_summary":    f"[오류] AI 배치 리뷰 실패: {response.error}",
+                    "review_text":     f"[오류] AI 배치 리뷰 실패: {response.error}",
+                    "inline_comments": [],
+                })
+            processed += len(batch)
+            continue
+
+        logger.debug(
+            "  배치 %d/%d 응답: %d chars (%.1fs)",
+            b_idx, len(batches), len(response.answer), response.elapsed_seconds or 0,
+        )
+
+        # 배치 응답 파싱 → 파일별 (file_summary, inline_comments)
+        # None 반환 = 잘리거나 불량한 응답 → 개별 API 재호출로 폴백
+        batch_results = parse_batch_response(response.answer, batch)
+
+        if batch_results is None:
+            logger.warning(
+                "  배치 %d/%d 파싱 실패 → 파일별 개별 API 재호출 (총 %d개)",
+                b_idx, len(batches), len(batch),
+            )
+            batch_results = []
+            for f_idx, diff in enumerate(batch, 1):
+                logger.info(
+                    "    [개별] %d/%d 재호출: %s",
+                    f_idx, len(batch), diff.filename,
+                )
+                single_prompt = build_inline_review_prompt(
+                    subject    = change.subject,
+                    project    = change.project,
+                    branch     = change.branch,
+                    diff       = diff,
+                    prompt_cfg = prompt_cfg,
+                )
+                single_resp = ai.chat(single_prompt)
+                if not single_resp.success:
+                    logger.warning("    개별 재호출 실패 (%s): %s", diff.filename, single_resp.error)
+                    batch_results.append((f"[오류] AI 재호출 실패: {single_resp.error}", []))
+                else:
+                    s, c = parse_inline_comments(single_resp.answer, diff.filename)
+                    batch_results.append((s, c))
+                    logger.debug(
+                        "    개별 응답: %d chars (%.1fs) → 코멘트 %d개",
+                        len(single_resp.answer), single_resp.elapsed_seconds or 0, len(c),
+                    )
+
+        for diff, (file_summary, inline_comments) in zip(batch, batch_results):
+            processed += 1
+            sev_counts = {s: sum(1 for c in inline_comments if c["severity"] == s)
+                          for s in ("CRITICAL", "MAJOR", "MINOR", "INFO")}
+            logger.info(
+                "    [%d/%d] %s  → 코멘트 %d개 (C:%d M:%d m:%d I:%d)",
+                processed, len(diffs), diff.filename,
+                len(inline_comments),
+                sev_counts["CRITICAL"], sev_counts["MAJOR"],
+                sev_counts["MINOR"], sev_counts["INFO"],
+            )
+
             file_reviews.append({
                 "filename":        diff.filename,
                 "change_type":     diff.change_type,
                 "lines_ins":       diff.lines_inserted,
                 "lines_del":       diff.lines_deleted,
-                "file_summary":    f"[오류] AI 리뷰 실패: {response.error}",
-                "review_text":     f"[오류] AI 리뷰 실패: {response.error}",
-                "inline_comments": [],
+                "file_summary":    file_summary,
+                "review_text":     file_summary,
+                "inline_comments": inline_comments,
             })
-            continue
 
-        logger.debug("  AI 응답: %d chars (%.1fs)",
-                     len(response.answer), response.elapsed_seconds or 0)
-
-        # JSON 파싱 → (file_summary, inline_comments)
-        file_summary, inline_comments = parse_inline_comments(response.answer, diff.filename)
-
-        logger.info("  → 인라인 코멘트 %d개 (CRITICAL:%d MAJOR:%d MINOR:%d INFO:%d)",
-                    len(inline_comments),
-                    sum(1 for c in inline_comments if c["severity"] == "CRITICAL"),
-                    sum(1 for c in inline_comments if c["severity"] == "MAJOR"),
-                    sum(1 for c in inline_comments if c["severity"] == "MINOR"),
-                    sum(1 for c in inline_comments if c["severity"] == "INFO"),
-                    )
-
-        file_reviews.append({
-            "filename":        diff.filename,
-            "change_type":     diff.change_type,
-            "lines_ins":       diff.lines_inserted,
-            "lines_del":       diff.lines_deleted,
-            "file_summary":    file_summary,
-            "review_text":     file_summary,   # formatter 호환용
-            "inline_comments": inline_comments,
-        })
+    total_comments = sum(len(fr["inline_comments"]) for fr in file_reviews)
+    logger.info(
+        "  배치 리뷰 완료: 파일 %d개, 인라인 코멘트 총 %d개 (%d회 API 호출)",
+        len(file_reviews), total_comments, len(batches),
+    )
 
     # ── 5b. 제외된 파일이 있으면 file_reviews 에 추가 (출력 파일용) ──────────
     if filter_result.total_skipped > 0:
