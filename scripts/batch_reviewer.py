@@ -337,6 +337,38 @@ def build_parser() -> argparse.ArgumentParser:
                    help="상세 로그")
     return p
 
+# ──────────────────────────────────────────────────────────────────────────────
+# 오래된 파일 정리
+# ──────────────────────────────────────────────────────────────────────────────
+
+def cleanup_old_files(cfg: dict, output_dir: Path, log_dir: Path) -> None:
+    """설정의 cleanup 섹션에 따라 output/log 디렉터리의 오래된 파일을 삭제합니다."""
+    cleanup_cfg = cfg.get("cleanup", {})
+    if not cleanup_cfg.get("enabled", False):
+        return
+
+    logger = logging.getLogger("batch_reviewer")
+    now    = time.time()
+
+    def _purge(directory: Path, keep_days: int) -> None:
+        if keep_days <= 0 or not directory.exists():
+            return
+        cutoff   = now - keep_days * 86400
+        removed  = 0
+        for f in directory.iterdir():
+            if f.is_file() and f.stat().st_mtime < cutoff:
+                try:
+                    f.unlink()
+                    removed += 1
+                except OSError as exc:
+                    logger.warning("파일 삭제 실패: %s — %s", f, exc)
+        if removed:
+            logger.info("정리 완료: %s — %d개 삭제 (%d일 이상 경과)", directory, removed, keep_days)
+        else:
+            logger.debug("정리 대상 없음: %s (%d일 기준)", directory, keep_days)
+
+    _purge(output_dir, int(cleanup_cfg.get("output_keep_days", 0)))
+    _purge(log_dir,    int(cleanup_cfg.get("log_keep_days",    0)))
 
 def main():
     args = build_parser().parse_args()
@@ -397,6 +429,9 @@ def main():
     # 요약 저장
     save_batch_summary(results, output_dir)
 
+    # 오래된 파일 정리
+    cleanup_old_files(cfg, output_dir, log_dir)
+    
     # 종료 코드
     failed = sum(1 for r in results if not r["success"])
     if failed:
