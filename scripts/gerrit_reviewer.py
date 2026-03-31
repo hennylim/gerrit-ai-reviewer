@@ -1063,6 +1063,28 @@ def run_review(
     )
     logger.info("  Gerrit 버전: %s", gerrit.caps.summary())
 
+    # ── 1b. 중복 리뷰 방지 ──────────────────────────────────────────────────
+    # dry_run 모드에서만 중복 체크 생략 (Gerrit 호출 자체를 하지 않으므로)
+    # no_post 모드에서는 Gerrit 등록을 건너뛸 뿐이므로, 중복 체크는 정상 수행
+    if not dry_run and review_cfg.get("skip_if_already_reviewed", True):
+        if gerrit.has_ai_review(change_number, patchset_number):
+            logger.info(
+                "중복 리뷰 건너뜀: change=#%d ps=%d — 이미 AI 리뷰 등록됨",
+                change_number, patchset_number,
+            )
+            return ReviewResult(
+                change_number   = change_number,
+                patchset_number = patchset_number,
+                project="", branch="", subject="", owner="",
+                ai_provider     = provider,
+                ai_model        = model or "skip",
+                review_summary  = "[중복 리뷰 건너뜀] 이미 이 Patchset에 AI 리뷰가 등록되어 있습니다.",
+                file_reviews    = [],
+                overall_score   = 0,
+                is_dry_run      = False,
+                elapsed_seconds = time.time() - start,
+            )
+
     # ── 2. 변경사항 정보 조회 ────────────────────────────────────────────────
     logger.info("[1/5] 변경사항 정보 조회 중...")
     change = gerrit.get_change(change_number, patchset_number)
