@@ -321,13 +321,13 @@ def _build_result(data: dict, filename: str) -> tuple[str, list[dict]]:
 
             icon    = {"CRITICAL": "🔴", "MAJOR": "🟠", "MINOR": "🟡", "INFO": "🔵"}.get(severity, "⚪")
             cat_str = f"[{category}] " if category else ""
-            formatted_msg = f"{icon} [{severity}] {cat_str}{message}"
+            formatted_msg = f"{icon} [{severity}] {cat_str}{message}" 
 
             inline_comments.append({
                 "line":     line,
                 "side":     side,
                 "severity": severity,
-                "message":  formatted_msg,
+                "message":  message,
             })
         except (TypeError, ValueError) as exc:
             logger.debug("인라인 코멘트 항목 파싱 오류: %s — %s", c, exc)

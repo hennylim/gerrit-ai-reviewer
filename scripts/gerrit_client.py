@@ -39,7 +39,10 @@ logger = logging.getLogger(__name__)
 # 기능 키:
 #   tag             : SetReviewInput.tag 필드 (2.15+)
 #   unresolved      : CommentInput.unresolved 필드 (3.0+)
-#   inline_comments : SetReviewInput.comments 필드 (2.14+)
+#   inline_comments : SetReviewInput.comments 필드 — Gerrit 2.1+ 부터 지원
+#                     (2.14+ 에서 추가된 것은 robot_comments 이며 inline_comments 가 아님)
+#   comment_side    : CommentInput.side 필드 "REVISION"/"PARENT" (2.15+)
+#                     2.13/2.14 에 포함하면 400 반환 → 반드시 제거
 #   notify_none     : notify=NONE 값 (2.15+). False이면 notify 필드 생략
 #   robot_comments  : robot_comments 필드 (2.14+)
 #
@@ -50,22 +53,23 @@ GERRIT_VERSION_REGISTRY: list[tuple[tuple, dict]] = [
     #   labels          : SetReviewInput.labels 필드 (Code-Review 점수) 안정 지원
     #   tag             : SetReviewInput.tag 필드 (2.15+)
     #   unresolved      : CommentInput.unresolved 필드 (3.0+)
-    #   inline_comments : SetReviewInput.comments 필드 (2.14+)
+    #   inline_comments : SetReviewInput.comments 필드 (2.1+ 부터 지원)
+    #   comment_side    : CommentInput.side 필드 (2.15+) — 2.13/2.14 미지원
     #   notify_none     : notify=NONE 값 (2.15+)
     #   robot_comments  : robot_comments 필드 (2.14+)
     #
     # ── Gerrit 3.x ──────────────────────────────────────────────────────────
-    ((3, 9), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  notify_none=True,  robot_comments=True)),
-    ((3, 5), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  notify_none=True,  robot_comments=True)),
-    ((3, 3), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  notify_none=True,  robot_comments=True)),
-    ((3, 0), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  notify_none=True,  robot_comments=True)),
+    ((3, 9), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=True)),
+    ((3, 5), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=True)),
+    ((3, 3), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=True)),
+    ((3, 0), dict(labels=True, tag=True,  unresolved=True,  inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=True)),
     # ── Gerrit 2.x ──────────────────────────────────────────────────────────
-    ((2, 16), dict(labels=True, tag=True,  unresolved=False, inline_comments=True,  notify_none=True,  robot_comments=True)),
-    ((2, 15), dict(labels=True, tag=True,  unresolved=False, inline_comments=True,  notify_none=True,  robot_comments=False)),
-    ((2, 14), dict(labels=True, tag=False, unresolved=False, inline_comments=True,  notify_none=False, robot_comments=False)),
-    ((2, 13), dict(labels=True, tag=False, unresolved=False, inline_comments=False, notify_none=False, robot_comments=False)),
+    ((2, 16), dict(labels=True, tag=True,  unresolved=False, inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=True)),
+    ((2, 15), dict(labels=True, tag=True,  unresolved=False, inline_comments=True,  comment_side=True,  notify_none=True,  robot_comments=False)),
+    ((2, 14), dict(labels=True, tag=False, unresolved=False, inline_comments=True,  comment_side=False, notify_none=False, robot_comments=False)),
+    ((2, 13), dict(labels=True, tag=False, unresolved=False, inline_comments=True,  comment_side=False, notify_none=False, robot_comments=False)),
     # ── 2.12 이하 / 버전 감지 실패 → 최소 기능 (message 만) ─────────────────
-    ((0,  0), dict(labels=False, tag=False, unresolved=False, inline_comments=False, notify_none=False, robot_comments=False)),
+    ((0,  0), dict(labels=False, tag=False, unresolved=False, inline_comments=False, comment_side=False, notify_none=False, robot_comments=False)),
 ]
 
 
@@ -82,12 +86,13 @@ class GerritCapabilities:
     tag:             bool  = False
     unresolved:      bool  = False
     inline_comments: bool  = False
+    comment_side:    bool  = False   # CommentInput.side 필드 (2.15+) — 2.13/2.14 미지원
     notify_none:     bool  = False
     robot_comments:  bool  = False
 
     def summary(self) -> str:
         feats = [k for k in ("labels", "tag", "unresolved", "inline_comments",
-                              "notify_none", "robot_comments") if getattr(self, k)]
+                              "comment_side", "notify_none", "robot_comments") if getattr(self, k)]
         return (
             f"Gerrit {self.version_str} "
             f"(지원 기능: {', '.join(feats) if feats else '최소'})"
@@ -398,16 +403,23 @@ class GerritClient:
         elif review.notify not in ("NONE",):
             body["notify"] = review.notify
 
-        # inline comments (2.14+)
+        # inline comments (2.1+)
         if caps.inline_comments and review.comments:
-            if caps.unresolved:
-                # 3.0+: unresolved 그대로
+            if caps.comment_side and caps.unresolved:
+                # 3.0+: 모든 필드 그대로
                 body["comments"] = review.comments
             else:
-                # 2.14~2.x: unresolved 필드 제거
+                # 2.13/2.14: side, unresolved 제거
+                # - side      : 2.15+ 전용, 2.13/2.14에 포함 시 400 반환
+                # - unresolved: 3.0+ 전용
+                strip_keys = set()
+                if not caps.comment_side:
+                    strip_keys.add("side")
+                if not caps.unresolved:
+                    strip_keys.add("unresolved")
                 body["comments"] = {
                     fname: [
-                        {k: v for k, v in c.items() if k != "unresolved"}
+                        {k: v for k, v in c.items() if k not in strip_keys}
                         for c in cmts
                     ]
                     for fname, cmts in review.comments.items()
@@ -698,39 +710,36 @@ class GerritClient:
 
     def _get_change_messages(self, change_number: int) -> list:
         """
-        Change 메시지 목록을 조회합니다. Gerrit 버전에 따라 엔드포인트를 자동 선택합니다.
+        Change 메시지 목록을 조회합니다. Gerrit 버전에 따라 엔드포인트를 선택합니다.
 
-        시도 순서:
-          1. GET /a/changes/{id}/messages        (Gerrit 2.14+)
-          2. GET /a/changes/{id}?o=MESSAGES      (Gerrit 2.13 이하 폴백)
+          - 2.14+ : GET /a/changes/{id}/messages
+          - 2.13  : GET /a/changes/{id}?o=MESSAGES  (버전을 알면 바로 사용, 불필요한 404 왕복 없음)
         """
-        # 시도 1: /messages 전용 엔드포인트 (2.14+)
-        try:
-            data = self._get(f"changes/{change_number}/messages")
-            if isinstance(data, list):
-                logger.debug("메시지 조회 성공 (/messages): %d개", len(data))
-                return data
-        except Exception as exc:
-            status = getattr(getattr(exc, "response", None), "status_code", None)
-            if status == 404:
-                logger.debug(
-                    "GET /messages 404 (Gerrit 2.13 이하) → ?o=MESSAGES 폴백"
-                )
-            else:
-                logger.debug("GET /messages 실패: %s", exc)
+        # 버전을 이미 알고 있으면 바로 올바른 엔드포인트 선택 (불필요한 404 왕복 방지)
+        use_messages_endpoint = self.caps.version_tuple >= (2, 14)
 
-        # 시도 2: ?o=MESSAGES 파라미터 (2.13 이하 호환)
-        # DETAILED_ACCOUNTS 를 함께 요청해야 author.username 필드가 포함됨
-        try:
-            data = self._get(
-                f"changes/{change_number}",
-                params={"o": ["MESSAGES", "DETAILED_ACCOUNTS"]},
-            )
-            messages = data.get("messages", []) if isinstance(data, dict) else []
-            logger.debug("메시지 조회 성공 (?o=MESSAGES): %d개", len(messages))
-            return messages
-        except Exception as exc:
-            logger.warning("메시지 조회 실패 (?o=MESSAGES): %s", exc)
+        if use_messages_endpoint:
+            # 2.14+: /messages 전용 엔드포인트
+            try:
+                data = self._get(f"changes/{change_number}/messages")
+                if isinstance(data, list):
+                    logger.debug("메시지 조회 성공 (/messages): %d개", len(data))
+                    return data
+            except Exception as exc:
+                logger.debug("GET /messages 실패: %s", exc)
+        else:
+            # 2.13 이하: ?o=MESSAGES 파라미터 직접 사용
+            # DETAILED_ACCOUNTS 를 함께 요청해야 author.username 필드가 포함됨
+            try:
+                data = self._get(
+                    f"changes/{change_number}",
+                    params={"o": ["MESSAGES", "DETAILED_ACCOUNTS"]},
+                )
+                messages = data.get("messages", []) if isinstance(data, dict) else []
+                logger.debug("메시지 조회 성공 (?o=MESSAGES): %d개", len(messages))
+                return messages
+            except Exception as exc:
+                logger.warning("메시지 조회 실패 (?o=MESSAGES): %s", exc)
 
         return []
 
