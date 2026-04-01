@@ -478,22 +478,57 @@ class GerritClient:
             params={"context": context_lines, "intraline": "true"}
         )
 
-        diff_lines  = []
         change_type = data.get("change_type", "MODIFIED")
         old_path    = data.get("meta_a", {}).get("name", filename)
+
+        # ── 실제 파일 라인 번호를 추적하며 표준 unified diff 생성 ──────────────
+        # Gerrit diff API content 구조:
+        #   {"ab": [...]}        → 양쪽 동일 컨텍스트 줄
+        #   {"a": [...], "b": [...]} → 변경 줄 (a=삭제, b=추가, 한쪽만 있을 수도 있음)
+        #   {"skip": N}          → 생략된 줄 수 (context 옵션에 의해 잘린 부분)
+        #
+        # @@ 헝크 헤더를 올바르게 생성해야 _extract_added_lines()가
+        # 정확한 NEW 파일 라인 번호를 추출할 수 있음.
+        diff_lines     = []
+        lines_inserted = 0
+        lines_deleted  = 0
+        old_line       = 1   # 이전 파일(a) 기준 현재 라인 번호
+        new_line       = 1   # 새 파일(b) 기준 현재 라인 번호
 
         diff_lines.append(f"--- a/{old_path}")
         diff_lines.append(f"+++ b/{filename}")
 
-        lines_inserted = lines_deleted = 0
         for section in data.get("content", []):
-            for line in section.get("ab", []):
+            skip = section.get("skip", 0)
+            if skip:
+                # 생략 구간: 라인 번호만 전진
+                old_line += skip
+                new_line += skip
+                continue
+
+            ab_lines = section.get("ab", [])
+            a_lines  = section.get("a",  [])
+            b_lines  = section.get("b",  [])
+
+            if a_lines or b_lines:
+                # 변경이 있는 섹션 → @@ 헝크 헤더 삽입
+                old_count = len(a_lines) + len(ab_lines)
+                new_count = len(b_lines) + len(ab_lines)
+                diff_lines.append(
+                    f"@@ -{old_line},{old_count} +{new_line},{new_count} @@"
+                )
+
+            for line in ab_lines:
                 diff_lines.append(f" {line}")
-            for line in section.get("a", []):
+                old_line += 1
+                new_line += 1
+            for line in a_lines:
                 diff_lines.append(f"-{line}")
+                old_line += 1
                 lines_deleted += 1
-            for line in section.get("b", []):
+            for line in b_lines:
                 diff_lines.append(f"+{line}")
+                new_line += 1
                 lines_inserted += 1
 
         return FileDiff(
