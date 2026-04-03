@@ -40,6 +40,30 @@ logger = logging.getLogger("gerrit_reviewer")
 # 로깅 설정
 # ──────────────────────────────────────────────────────────────────────────────
 
+class _SensitiveDataFilter(logging.Filter):
+    """
+    로그 메시지에서 민감 정보를 마스킹합니다.
+    현재 마스킹 대상:
+      - Google API 키  : AIza[0-9A-Za-z_-]{35}
+      - 기타 api_key 파라미터 : api_key=xxxxx 형태
+    """
+    import re as _re
+    _PATTERNS = [
+        (_re.compile(r"AIza[0-9A-Za-z_\-]{35}"),      "AIza***MASKED***"),
+        (_re.compile(r"(api[_-]?key['\"]?\s*[:=]\s*['\"]?)[0-9A-Za-z_\-]{20,}",
+                     _re.IGNORECASE),                  r"\1***MASKED***"),
+    ]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        for pattern, replacement in self._PATTERNS:
+            msg = pattern.sub(replacement, msg)
+        # LogRecord 를 직접 수정하여 핸들러가 마스킹된 메시지를 출력하게 함
+        record.msg  = msg
+        record.args = ()
+        return True
+
+
 def setup_logging(log_dir: Path, verbose: bool = False) -> logging.Logger:
     log_dir.mkdir(parents=True, exist_ok=True)
     ts        = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -52,16 +76,20 @@ def setup_logging(log_dir: Path, verbose: bool = False) -> logging.Logger:
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)   # 핸들러가 필터링
 
+    sensitive_filter = _SensitiveDataFilter()
+
     # 파일 핸들러: DEBUG 이상 모두 기록
     fh = logging.FileHandler(log_file, encoding="utf-8")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter(fmt, datefmt))
+    fh.addFilter(sensitive_filter)
     root.addHandler(fh)
 
     # 콘솔 핸들러: verbose 여부에 따라 레벨 조정
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(level)
     ch.setFormatter(logging.Formatter(fmt, datefmt))
+    ch.addFilter(sensitive_filter)
     root.addHandler(ch)
 
     logger = logging.getLogger("gerrit_reviewer")
@@ -1023,8 +1051,10 @@ def run_review(
     dry_run:         bool = False,
     no_post:         bool = False,
     verbose:         bool = False,
+    force:           bool = False,   # 중복 리뷰 방지 체크를 무시하고 강제 실행
     ai_provider_override: str = None,
     ai_model_override:    str = None,
+    gerrit_client=None,   # 외부에서 주입된 공유 GerritClient (None이면 내부 생성)
 ) -> ReviewResult:
 
     logger = logging.getLogger("gerrit_reviewer")
@@ -1046,27 +1076,34 @@ def run_review(
     logger.info("=" * 60)
     logger.info("AI 코드 리뷰 시작")
     logger.info("  Change   : #%d  Patchset: %d", change_number, patchset_number)
-    logger.info("  DRY-RUN  : %s  NO-POST: %s", dry_run, no_post)
+    logger.info("  DRY-RUN  : %s  NO-POST: %s  FORCE: %s", dry_run, no_post, force)
     logger.info("  Provider : %s  Model: %s", provider, model or "default")
     logger.info("=" * 60)
 
     # ── 1. Gerrit 클라이언트 초기화 ──────────────────────────────────────────
-    gerrit = GerritClient(
-        base_url   = gerrit_cfg["url"],
-        username   = gerrit_cfg["username"],
-        password   = gerrit_cfg["password"],
-        auth_type  = gerrit_cfg.get("auth_type", "basic"),
-        timeout    = gerrit_cfg.get("timeout", 30),
-        verify_ssl = gerrit_cfg.get("verify_ssl", True),
-        dry_run    = dry_run,
-        version    = gerrit_cfg.get("version", ""),   # 수동 버전 지정 (비어 있으면 자동 감지)
-    )
+    if gerrit_client is not None:
+        gerrit = gerrit_client
+        # 외부 주입 클라이언트는 dry_run 상태가 다를 수 있으므로 확인
+        if gerrit.dry_run != dry_run:
+            logger.debug("주입된 GerritClient dry_run=%s, 요청 dry_run=%s (주입값 사용)", gerrit.dry_run, dry_run)
+    else:
+        gerrit = GerritClient(
+            base_url   = gerrit_cfg["url"],
+            username   = gerrit_cfg["username"],
+            password   = gerrit_cfg["password"],
+            auth_type  = gerrit_cfg.get("auth_type", "basic"),
+            timeout    = gerrit_cfg.get("timeout", 30),
+            verify_ssl = gerrit_cfg.get("verify_ssl", True),
+            dry_run    = dry_run,
+            version    = gerrit_cfg.get("version", ""),   # 수동 버전 지정 (비어 있으면 자동 감지)
+        )
     logger.info("  Gerrit 버전: %s", gerrit.caps.summary())
 
     # ── 1b. 중복 리뷰 방지 ──────────────────────────────────────────────────
     # dry_run 모드에서만 중복 체크 생략 (Gerrit 호출 자체를 하지 않으므로)
     # no_post 모드에서는 Gerrit 등록을 건너뛸 뿐이므로, 중복 체크는 정상 수행
-    if not dry_run and review_cfg.get("skip_if_already_reviewed", True):
+    # force=True 이면 중복 체크를 건너뛰고 강제로 리뷰 실행
+    if not dry_run and not force and review_cfg.get("skip_if_already_reviewed", True):
         if gerrit.has_ai_review(change_number, patchset_number):
             logger.info(
                 "중복 리뷰 건너뜀: change=#%d ps=%d — 이미 AI 리뷰 등록됨",
@@ -1084,6 +1121,11 @@ def run_review(
                 is_dry_run      = False,
                 elapsed_seconds = time.time() - start,
             )
+    elif force and not dry_run:
+        logger.info(
+            "--force 옵션: 중복 리뷰 체크 생략, 강제 실행 (change=#%d ps=%d)",
+            change_number, patchset_number,
+        )
 
     # ── 2. 변경사항 정보 조회 ────────────────────────────────────────────────
     logger.info("[1/5] 변경사항 정보 조회 중...")
@@ -1246,6 +1288,7 @@ def run_review(
 
     file_reviews = []
     processed = 0
+    ai_all_failed = True   # AI 호출이 단 하나라도 성공하면 False 로 전환
 
     def _review_single(diff):
         single_prompt = build_inline_review_prompt(
@@ -1259,14 +1302,14 @@ def run_review(
 
         if not single_resp.success:
             logger.warning("    개별 호출 실패 (%s): %s", diff.filename, single_resp.error)
-            return diff, f"[오류] AI 개별 리뷰 실패: {single_resp.error}", []
+            return diff, f"[오류] AI 개별 리뷰 실패: {single_resp.error}", [], True  # failed=True
 
         file_summary, inline_comments = parse_inline_comments(single_resp.answer, diff.filename)
         logger.debug(
             "    개별 응답: %d chars (%.1fs) → 코멘트 %d개",
             len(single_resp.answer), single_resp.elapsed_seconds or 0, len(inline_comments),
         )
-        return diff, file_summary, inline_comments
+        return diff, file_summary, inline_comments, False  # failed=False
 
     def _review_batch(batch, level=0):
         if not batch:
@@ -1324,15 +1367,18 @@ def run_review(
             logger.warning("%s단일 파일 재시도도 실패 — 개별 호출로 폴백: %s", indent, diff.filename)
             return [ _review_single(diff) ]
 
-        return [ (diff, file_summary, inline_comments)
+        # 배치 성공: failed=False 로 튜플 구성
+        return [ (diff, file_summary, inline_comments, False)
                  for diff, (file_summary, inline_comments) in zip(batch, batch_results) ]
 
     for b_idx, batch in enumerate(batches, 1):
         ### 배치 처리, 재시도 로직 _review_batch로 통합 ###
         batch_items = _review_batch(batch)
 
-        for diff, file_summary, inline_comments in batch_items:
+        for diff, file_summary, inline_comments, ai_failed in batch_items:
             processed += 1
+            if not ai_failed:
+                ai_all_failed = False   # 하나라도 성공
             if not inline_comments:
                 logger.info(
                     "    [%d/%d] %s → 인라인 코멘트 없음, 결과에서 제외",
@@ -1450,6 +1496,13 @@ def run_review(
     # ── 7. Gerrit 리뷰 등록 ──────────────────────────────────────────────────
     if no_post:
         logger.info("[5/5] --no-post 옵션으로 Gerrit 등록을 건너뜁니다.")
+    elif ai_all_failed:
+        # AI 호출이 전부 실패한 경우 Gerrit에 등록하지 않음
+        # → 빈 리뷰가 기록되면 중복 방지 로직이 오판하여 다음 실행에서도 스킵됨
+        logger.warning(
+            "[5/5] AI 호출 전체 실패 — Gerrit 등록 생략 (다음 실행에서 재시도됩니다.)"
+        )
+        result.error = "AI 호출 전체 실패로 Gerrit 등록 생략"
     else:
         logger.info("[5/5] Gerrit 코드 리뷰 등록 중...")
         logger.info("  - 전체 요약 코멘트 + 인라인 코멘트 %d개", total_inline)
@@ -1509,6 +1562,9 @@ def build_parser() -> argparse.ArgumentParser:
   # NO-POST: AI 리뷰는 수행하지만 Gerrit에 등록 안함 (디버깅)
   python gerrit_reviewer.py --change 12345 --patchset 1 --no-post
 
+  # FORCE: 이미 리뷰된 Patchset도 강제로 다시 리뷰
+  python gerrit_reviewer.py --change 12345 --patchset 1 --force
+
   # 특정 AI 제공자/모델 지정
   python gerrit_reviewer.py --change 12345 --patchset 1 --provider gemini --model gemini-2.0-flash
 
@@ -1524,6 +1580,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--model",     type=str, default=None,   help="AI 모델 오버라이드")
     p.add_argument("--dry-run",   action="store_true",      help="AI/Gerrit 실제 호출 없이 테스트 모드로 실행")
     p.add_argument("--no-post",   action="store_true",      help="AI 리뷰 수행 후 Gerrit 등록은 건너뜀")
+    p.add_argument("--force",     action="store_true",      help="중복 리뷰 방지 체크를 무시하고 강제로 리뷰 실행")
     p.add_argument("--verbose",   action="store_true",      help="DEBUG 레벨 로그 출력")
     return p
 
@@ -1559,6 +1616,7 @@ def main():
             dry_run              = args.dry_run,
             no_post              = args.no_post,
             verbose              = args.verbose,
+            force                = args.force,
             ai_provider_override = args.provider,
             ai_model_override    = args.model,
         )

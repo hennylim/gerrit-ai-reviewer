@@ -54,6 +54,7 @@ ${BLD}배치 리뷰 옵션 (--batch):${RST}
 ${BLD}공통 옵션:${RST}
   --dry-run          AI/Gerrit 실제 호출 없이 테스트
   --no-post          AI 리뷰 수행 후 Gerrit 등록 안함
+  --force            중복 리뷰 방지 체크 무시, 강제 재리뷰
   --verbose          DEBUG 상세 로그 출력
   --provider <name>  AI 제공자 오버라이드 (claude/gemini/openai)
   --model    <name>  AI 모델 오버라이드
@@ -71,6 +72,9 @@ ${BLD}예시:${RST}
 
   # 디버깅 단계 2: AI 리뷰만, Gerrit 미등록
   $(basename "$0") --change 12345 --patchset 1 --no-post
+
+  # 강제 재리뷰 (이미 리뷰된 Patchset 재실행)
+  $(basename "$0") --change 12345 --patchset 1 --force
 
   # 배치 처리
   $(basename "$0") --batch --changes 100 101 102 --no-post

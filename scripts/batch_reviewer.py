@@ -109,6 +109,7 @@ def _review_task(
     cfg:       dict,
     project_dir: Path,
     kwargs:    dict,
+    gerrit_client=None,   # 배치 레벨 공유 클라이언트
 ) -> dict:
     """단일 리뷰 실행 후 요약 딕셔너리 반환"""
     logger = logging.getLogger("batch_reviewer")
@@ -120,6 +121,7 @@ def _review_task(
             patchset_number = patchset,
             cfg             = cfg,
             project_dir     = project_dir,
+            gerrit_client   = gerrit_client,
             **kwargs,
         )
         elapsed = time.time() - t0
@@ -169,6 +171,21 @@ def run_batch(
     logger.info("  대상: %d 건  워커: %d  간격: %.1fs", len(pairs), workers, interval)
     logger.info("=" * 60)
 
+    # ── 공유 GerritClient 생성 (버전 감지 1회, 계정 ID 캐시 공유) ─────────────
+    from scripts.gerrit_client import GerritClient
+    gcfg = cfg["gerrit"]
+    shared_gerrit = GerritClient(
+        base_url   = gcfg["url"],
+        username   = gcfg["username"],
+        password   = gcfg["password"],
+        auth_type  = gcfg.get("auth_type", "basic"),
+        timeout    = gcfg.get("timeout", 30),
+        verify_ssl = gcfg.get("verify_ssl", True),
+        dry_run    = review_kwargs.get("dry_run", False),
+        version    = gcfg.get("version", ""),
+    )
+    logger.info("공유 GerritClient 초기화: %s", shared_gerrit.caps.summary())
+
     results   = []
     total     = len(pairs)
 
@@ -176,19 +193,23 @@ def run_batch(
         # 순차 실행
         for i, (change, patchset) in enumerate(pairs, 1):
             logger.info("[%d/%d] 처리 중: #%d ps%d", i, total, change, patchset)
-            r = _review_task(change, patchset, cfg, project_dir, review_kwargs)
+            r = _review_task(change, patchset, cfg, project_dir, review_kwargs,
+                             gerrit_client=shared_gerrit)
             results.append(r)
             if i < total and interval > 0:
                 logger.debug("다음 요청까지 %.1f초 대기...", interval)
                 time.sleep(interval)
     else:
         # 병렬 실행
-        logger.info("병렬 실행 (workers=%d)", workers)
+        # 주의: 병렬 모드에서 shared_gerrit 공유는 requests.Session 스레드 안전성 문제가 있으므로
+        #       각 워커에서 별도 클라이언트를 생성 (버전 감지 비용은 감수)
+        logger.info("병렬 실행 (workers=%d) — 워커별 독립 GerritClient 사용", workers)
         futures = {}
         with ThreadPoolExecutor(max_workers=workers) as executor:
             for change, patchset in pairs:
                 f = executor.submit(
-                    _review_task, change, patchset, cfg, project_dir, review_kwargs
+                    _review_task, change, patchset, cfg, project_dir, review_kwargs,
+                    gerrit_client=None,   # 병렬: 각 워커가 자체 생성
                 )
                 futures[f] = (change, patchset)
 
@@ -305,6 +326,9 @@ def build_parser() -> argparse.ArgumentParser:
 
   # NO-POST (AI 리뷰만, Gerrit 미등록)
   python scripts/batch_reviewer.py --changes 100 101 --no-post
+
+  # FORCE: 이미 리뷰된 Patchset도 강제로 다시 리뷰
+  python scripts/batch_reviewer.py --changes 100 101 --force
 """,
     )
     src = p.add_mutually_exclusive_group(required=True)
@@ -319,8 +343,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="--changes 사용 시 patchset 번호 (기본: 1)")
     p.add_argument("--workers",   type=int, default=1,
                    help="병렬 처리 워커 수 (기본: 1, 순차)")
-    p.add_argument("--interval",  type=float, default=2.0,
-                   help="순차 처리 시 요청 간격 초 (기본: 2.0)")
+    p.add_argument("--interval",  type=float, default=3.0,
+                   help="순차 처리 시 요청 간격 초 (기본: 3.0)")
     p.add_argument("--config",    type=str, default=None,
                    help="설정 디렉토리 경로")
     p.add_argument("--output",    type=str, default=None,
@@ -333,6 +357,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="테스트 모드 (AI/Gerrit 실제 호출 없음)")
     p.add_argument("--no-post",   action="store_true",
                    help="AI 리뷰 후 Gerrit 미등록")
+    p.add_argument("--force",     action="store_true",
+                   help="중복 리뷰 방지 체크를 무시하고 강제로 리뷰 실행")
     p.add_argument("--verbose",   action="store_true",
                    help="상세 로그")
     return p
@@ -422,6 +448,7 @@ def main():
         dry_run              = args.dry_run,
         no_post              = args.no_post,
         verbose              = args.verbose,
+        force                = args.force,
         ai_provider_override = args.provider,
         ai_model_override    = args.model,
     )
