@@ -1449,7 +1449,7 @@ def run_review(
 
     if not reviewed_files:
         logger.info("  인라인 코멘트가 있는 파일이 없어 전체 요약을 생성하지 않습니다.")
-        review_summary = "[AI 리뷰] 인라인 코멘트가 없는 파일만 존재합니다."
+        review_summary = "[AI 리뷰] 리뷰 결과 특이사항이 없어 전체 요약을 생략합니다."
         if skip_note:
             review_summary += skip_note
         overall_score = 0
