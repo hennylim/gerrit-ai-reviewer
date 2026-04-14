@@ -355,7 +355,7 @@ def _build_result(data: dict, filename: str) -> tuple[str, list[dict]]:
                 "line":     line,
                 "side":     side,
                 "severity": severity,
-                "message":  message,
+                "message":  formatted_msg,
             })
         except (TypeError, ValueError) as exc:
             logger.debug("인라인 코멘트 항목 파싱 오류: %s — %s", c, exc)
