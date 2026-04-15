@@ -2071,3 +2071,1200 @@
 [2026-04-03 13:00:50] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260403_130050.json
 [2026-04-03 13:00:50] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260403_130050.txt
 [2026-04-03 13:00:50] INFO     gerrit_reviewer — 전체 성공: 17 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260414_190001.log
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-14 19:00:01] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:00:01] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 7 건
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — 리뷰 대상: 7 건 — #80666, #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-14 19:00:01] INFO     batch_reviewer — ============================================================
+[2026-04-14 19:00:01] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-14 19:00:01] INFO     batch_reviewer —   대상: 7 건  워커: 1  간격: 3.0s
+[2026-04-14 19:00:01] INFO     batch_reviewer — ============================================================
+[2026-04-14 19:00:01] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:00:01] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:00:01] INFO     batch_reviewer — [1/7] 처리 중: #80666 ps6
+[2026-04-14 19:00:01] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80666 ps=6
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   Change   : #80666  Patchset: 6
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — [1/5] 변경사항 정보 조회 중...
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   변경사항: #80666 [RG/dslpon/apollo] [RGSW-4136][LTE/5G] Add APN Settings API (author: Kyungtae Kim(김경태))
+[2026-04-14 19:00:01] INFO     gerrit_reviewer — [2/5] 파일 diff 조회 및 필터링 중...
+[2026-04-14 19:00:01] INFO     gerrit_reviewer —   변경 파일 수: 10개 (max_files=50)
+[2026-04-14 19:00:01] INFO     scripts.gerrit_client — 변경 파일 수: 10 (max_files=50)
+[2026-04-14 19:00:02] INFO     gerrit_reviewer —   diff 획득: 10개 파일
+[2026-04-14 19:00:02] INFO     gerrit_reviewer — [3/5] AI(gemini) 초기화 중...
+[2026-04-14 19:00:02] INFO     gerrit_reviewer —   AI 모델: gemini-3.1-pro-preview
+[2026-04-14 19:00:02] INFO     gerrit_reviewer — [4/5] 배치 AI 코드 리뷰 실행 중... (파일 10개 → 배치 2개, 모델 한도 600,000 chars)
+[2026-04-14 19:00:02] INFO     gerrit_reviewer — [배치 재시도 레벨 0] 5개 파일 리뷰: cms-dm-tr181-cellular.xml, ApiMobile.h, IFalMobile.h 외 2개
+[2026-04-14 19:00:02] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-14 19:14:52] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-14 19:14:52] INFO     gerrit_reviewer —     [1/10] data-model/cms-dm-tr181-cellular.xml → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-14 19:14:52] INFO     gerrit_reviewer —     [2/10] userspace/hmx/apps/rego/src-tr181/api/api_v1/inc/ApiMobile.h  → 코멘트 5개 (C:4 M:0 m:1 I:0)
+[2026-04-14 19:14:52] INFO     gerrit_reviewer —     [3/10] userspace/hmx/apps/rego/src-tr181/fal/fal_al/inc/IFalMobile.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-14 19:14:52] INFO     gerrit_reviewer —     [4/10] userspace/hmx/apps/rego/src-tr181/fal/fal_al/src/IFalMobile.cpp  → 코멘트 4개 (C:0 M:0 m:4 I:0)
+[2026-04-14 19:14:52] INFO     gerrit_reviewer —     [5/10] userspace/hmx/apps/rego/src-tr181/fal/fal_api/inc/FalMobileApi.h  → 코멘트 1개 (C:0 M:0 m:1 I:0)
+[2026-04-14 19:14:52] INFO     gerrit_reviewer — [배치 재시도 레벨 0] 5개 파일 리뷰: FalMobileApi.cpp, hmx_mobile.h, hmx_mobile.c 외 2개
+[2026-04-14 19:14:52] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-14 19:15:34] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 503 Service Unavailable"
+[2026-04-14 19:15:34] WARNING  ai_chat.base_ai — ⚠️  Google Gemini API 일시 오류 (시도 1/4) — 5초 후 재시도합니다.
+    오류: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand 
+[2026-04-14 19:15:39] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-14 19:16:57] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-14 19:16:57] INFO     ai_chat.base_ai — ✅ Google Gemini 재시도 성공 (시도 2/4)
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —     [6/10] userspace/hmx/apps/rego/src-tr181/fal/fal_api/src/FalMobileApi.cpp  → 코멘트 3개 (C:2 M:0 m:1 I:0)
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —     [7/10] userspace/hmx/apps/rego/src-tr181/fal/fal_cms/inc/hmx_mobile.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —     [8/10] userspace/hmx/apps/rego/src-tr181/fal/fal_cms/src/hmx_mobile.c  → 코멘트 3개 (C:0 M:3 m:0 I:0)
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —     [9/10] userspace/hmx/apps/rego/src-tr181/utils/common/inc/be_comms.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —     [10/10] userspace/hmx/apps/rego/src-tr181/utils/common/src/be_comms.cpp → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —   배치 리뷰 완료: 파일 5개, 인라인 코멘트 총 16개 (2회 API 호출)
+[2026-04-14 19:16:57] INFO     gerrit_reviewer —   전체 요약 생성 중...
+[2026-04-14 19:16:57] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-14 19:17:40] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   Code-Review 점수: +1
+[2026-04-14 19:17:40] INFO     gerrit_reviewer — 인라인 코멘트 총 16개 (파일 5개)
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   Gerrit 인라인 코멘트: 총 16개 (파일 5개)
+[2026-04-14 19:17:40] INFO     scripts.review_formatter — TEXT 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.txt
+[2026-04-14 19:17:40] INFO     scripts.review_formatter — MARKDOWN 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.md
+[2026-04-14 19:17:40] INFO     scripts.review_formatter — JSON 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.json
+[2026-04-14 19:17:40] INFO     scripts.review_formatter — HTML 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.html
+[2026-04-14 19:17:40] INFO     scripts.review_formatter — 전체 리뷰 결과 저장 완료: /home/hennylim/tools/gerrit-ai-reviewer-dev/output
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   저장: [TEXT] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.txt
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   저장: [MARKDOWN] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.md
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   저장: [JSON] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.json
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   저장: [HTML] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80666_p6_20260414_191740.html
+[2026-04-14 19:17:40] INFO     gerrit_reviewer — [5/5] Gerrit 코드 리뷰 등록 중...
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   - 전체 요약 코멘트 + 인라인 코멘트 16개
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   → 인라인 코멘트 모드 (Gerrit 2.13.14)
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client — Gerrit 리뷰 등록 시작 [Gerrit 2.13.14 (지원 기능: labels, inline_comments)]
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client —   [FULL] 시도: 필드=['message', 'labels', 'comments']  메시지=718자  인라인=16개
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client —   [FULL] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client — 2단계: labels 제거 후 재시도...
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client —   [NO-LABELS] 시도: 필드=['message', 'comments']  메시지=718자  인라인=16개
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client —   [NO-LABELS] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client — 3단계: 메시지 추가 정제 후 재시도...
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client —   [SAFE-MSG] 시도: 필드=['message', 'comments']  메시지=718자  인라인=16개
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client —   [SAFE-MSG] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client — 4단계: 최소 코멘트만 등록 시도...
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client —   [MINIMAL] 시도: 필드=['message']  메시지=99자  인라인=0개
+[2026-04-14 19:17:40] INFO     scripts.gerrit_client —   [MINIMAL] 등록 완료: change=80666 ps=6  label=(없음)
+[2026-04-14 19:17:40] WARNING  scripts.gerrit_client —   => 최소 코멘트만 등록됨. 전체 리뷰는 output/ 디렉토리 파일을 확인하세요.
+[2026-04-14 19:17:40] INFO     gerrit_reviewer —   ✅ Gerrit 리뷰 등록 완료
+[2026-04-14 19:17:40] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:40] INFO     gerrit_reviewer — AI 코드 리뷰 완료  (총 1058.6초)
+[2026-04-14 19:17:40] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:43] INFO     batch_reviewer — [2/7] 처리 중: #80460 ps1
+[2026-04-14 19:17:43] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-14 19:17:43] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:43] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:43] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-14 19:17:43] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:43] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:43] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:43] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:43] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:43] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:46] INFO     batch_reviewer — [3/7] 처리 중: #79722 ps1
+[2026-04-14 19:17:46] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-14 19:17:46] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:46] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:46] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-14 19:17:46] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:46] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:46] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:46] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:46] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:46] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:49] INFO     batch_reviewer — [4/7] 처리 중: #80612 ps3
+[2026-04-14 19:17:49] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-14 19:17:49] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:49] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:49] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-14 19:17:49] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:49] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:49] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:49] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:49] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:49] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:52] INFO     batch_reviewer — [5/7] 처리 중: #80371 ps2
+[2026-04-14 19:17:52] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-14 19:17:52] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:52] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:52] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-14 19:17:52] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:52] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:52] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:52] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:52] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:52] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:55] INFO     batch_reviewer — [6/7] 처리 중: #76086 ps1
+[2026-04-14 19:17:55] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-14 19:17:55] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:55] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:55] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-14 19:17:55] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:55] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:55] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:55] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:55] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:55] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:58] INFO     batch_reviewer — [7/7] 처리 중: #80133 ps8
+[2026-04-14 19:17:58] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-14 19:17:58] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:58] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 19:17:58] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-14 19:17:58] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 19:17:58] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 19:17:58] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 19:17:58] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 19:17:58] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-14 19:17:58] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-14 19:17:58] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_191758.json
+[2026-04-14 19:17:58] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_191758.txt
+[2026-04-14 19:17:58] INFO     gerrit_reviewer — 전체 성공: 7 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260414_200002.log
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-14 20:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-14 20:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 20:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-14 20:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-14 20:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 20:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-14 20:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-14 20:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-14 20:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-14 20:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-14 20:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-14 20:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-14 20:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-14 20:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-14 20:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-14 20:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-14 20:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-14 20:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-14 20:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-14 20:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-14 20:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-14 20:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 20:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-14 20:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 20:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 20:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 20:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 20:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-14 20:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-14 20:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_200017.json
+[2026-04-14 20:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_200017.txt
+[2026-04-14 20:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260414_210002.log
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-14 21:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-14 21:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 21:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-14 21:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-14 21:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 21:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-14 21:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-14 21:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-14 21:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-14 21:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-14 21:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-14 21:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-14 21:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-14 21:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-14 21:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-14 21:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-14 21:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-14 21:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-14 21:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-14 21:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-14 21:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-14 21:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 21:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-14 21:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 21:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 21:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 21:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 21:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-14 21:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-14 21:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_210017.json
+[2026-04-14 21:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_210017.txt
+[2026-04-14 21:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260414_220002.log
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-14 22:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-14 22:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 22:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-14 22:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-14 22:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 22:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-14 22:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-14 22:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-14 22:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-14 22:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-14 22:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-14 22:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-14 22:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-14 22:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-14 22:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-14 22:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-14 22:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-14 22:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-14 22:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-14 22:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-14 22:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-14 22:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 22:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-14 22:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 22:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 22:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 22:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 22:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-14 22:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-14 22:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_220017.json
+[2026-04-14 22:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_220017.txt
+[2026-04-14 22:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260414_230002.log
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-14 23:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-14 23:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 23:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-14 23:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-14 23:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-14 23:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-14 23:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-14 23:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-14 23:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-14 23:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-14 23:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-14 23:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-14 23:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-14 23:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-14 23:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-14 23:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-14 23:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-14 23:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-14 23:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-14 23:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-14 23:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-14 23:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-14 23:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-14 23:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-14 23:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-14 23:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-14 23:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-14 23:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-14 23:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-14 23:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_230017.json
+[2026-04-14 23:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260414_230017.txt
+[2026-04-14 23:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_090001.log
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 09:00:01] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:01] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 7 건
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — 리뷰 대상: 7 건 — #80709, #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 09:00:01] INFO     batch_reviewer — ============================================================
+[2026-04-15 09:00:01] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 09:00:01] INFO     batch_reviewer —   대상: 7 건  워커: 1  간격: 3.0s
+[2026-04-15 09:00:01] INFO     batch_reviewer — ============================================================
+[2026-04-15 09:00:01] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:01] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:01] INFO     batch_reviewer — [1/7] 처리 중: #80709 ps1
+[2026-04-15 09:00:01] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80709 ps=1
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:01] INFO     gerrit_reviewer —   Change   : #80709  Patchset: 1
+[2026-04-15 09:00:01] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:01] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:01] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — [1/5] 변경사항 정보 조회 중...
+[2026-04-15 09:00:01] INFO     gerrit_reviewer —   변경사항: #80709 [RG/dslpon/scorpio] [JPNSW-3192][dnslookup] fixed mdm lock (invalid HostName) (author: Donghyeon Kang(강동현))
+[2026-04-15 09:00:01] INFO     gerrit_reviewer — [2/5] 파일 diff 조회 및 필터링 중...
+[2026-04-15 09:00:02] INFO     gerrit_reviewer —   변경 파일 수: 1개 (max_files=50)
+[2026-04-15 09:00:02] INFO     scripts.gerrit_client — 변경 파일 수: 1 (max_files=50)
+[2026-04-15 09:00:02] INFO     gerrit_reviewer —   diff 획득: 1개 파일
+[2026-04-15 09:00:02] INFO     gerrit_reviewer — [3/5] AI(gemini) 초기화 중...
+[2026-04-15 09:00:02] INFO     gerrit_reviewer —   AI 모델: gemini-3.1-pro-preview
+[2026-04-15 09:00:02] INFO     gerrit_reviewer — [4/5] 배치 AI 코드 리뷰 실행 중... (파일 1개 → 배치 1개, 모델 한도 600,000 chars)
+[2026-04-15 09:00:02] INFO     gerrit_reviewer — [배치 재시도 레벨 0] 1개 파일 리뷰: ssk2_diag.c
+[2026-04-15 09:00:02] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-15 09:00:17] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —     [1/1] userspace/private/libs/ssk_util/ssk2_diag.c → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   배치 리뷰 완료: 파일 0개, 인라인 코멘트 총 0개 (1회 API 호출)
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   전체 요약 생성 중...
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   인라인 코멘트가 있는 파일이 없어 전체 요약을 생성하지 않습니다.
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   Code-Review 점수: +0
+[2026-04-15 09:00:17] INFO     gerrit_reviewer — 인라인 코멘트 총 0개 (파일 0개)
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   Gerrit 인라인 코멘트: 총 0개 (파일 0개)
+[2026-04-15 09:00:17] INFO     scripts.review_formatter — TEXT 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.txt
+[2026-04-15 09:00:17] INFO     scripts.review_formatter — MARKDOWN 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.md
+[2026-04-15 09:00:17] INFO     scripts.review_formatter — JSON 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.json
+[2026-04-15 09:00:17] INFO     scripts.review_formatter — HTML 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.html
+[2026-04-15 09:00:17] INFO     scripts.review_formatter — 전체 리뷰 결과 저장 완료: /home/hennylim/tools/gerrit-ai-reviewer-dev/output
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   저장: [TEXT] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.txt
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   저장: [MARKDOWN] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.md
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   저장: [JSON] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.json
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   저장: [HTML] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80709_p1_20260415_090017.html
+[2026-04-15 09:00:17] INFO     gerrit_reviewer — [5/5] Gerrit 코드 리뷰 등록 중...
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   - 전체 요약 코멘트 + 인라인 코멘트 0개
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   → 인라인 코멘트 모드 (Gerrit 2.13.14)
+[2026-04-15 09:00:17] INFO     scripts.gerrit_client — Gerrit 리뷰 등록 시작 [Gerrit 2.13.14 (지원 기능: labels, inline_comments)]
+[2026-04-15 09:00:17] INFO     scripts.gerrit_client —   [FULL] 시도: 필드=['message', 'labels']  메시지=36자  인라인=0개
+[2026-04-15 09:00:17] INFO     scripts.gerrit_client —   [FULL] 등록 완료: change=80709 ps=1  label={'Code-Review': 0}
+[2026-04-15 09:00:17] INFO     gerrit_reviewer —   ✅ Gerrit 리뷰 등록 완료
+[2026-04-15 09:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 완료  (총 15.4초)
+[2026-04-15 09:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:20] INFO     batch_reviewer — [2/7] 처리 중: #80460 ps1
+[2026-04-15 09:00:20] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 09:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:20] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:20] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 09:00:20] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:20] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:20] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:20] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:20] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:23] INFO     batch_reviewer — [3/7] 처리 중: #79722 ps1
+[2026-04-15 09:00:23] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 09:00:23] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:23] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:23] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 09:00:23] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:23] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:23] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:23] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:23] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:23] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:26] INFO     batch_reviewer — [4/7] 처리 중: #80612 ps3
+[2026-04-15 09:00:26] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 09:00:26] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:26] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:26] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 09:00:26] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:26] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:26] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:26] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:26] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:26] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:29] INFO     batch_reviewer — [5/7] 처리 중: #80371 ps2
+[2026-04-15 09:00:29] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 09:00:29] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:29] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:29] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 09:00:29] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:29] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:29] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:29] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:29] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:29] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:32] INFO     batch_reviewer — [6/7] 처리 중: #76086 ps1
+[2026-04-15 09:00:32] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 09:00:32] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:32] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:32] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 09:00:32] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:32] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:32] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:32] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:32] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:32] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:35] INFO     batch_reviewer — [7/7] 처리 중: #80133 ps8
+[2026-04-15 09:00:35] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 09:00:35] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:35] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 09:00:35] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 09:00:35] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 09:00:35] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 09:00:35] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 09:00:35] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 09:00:35] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 09:00:35] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 09:00:35] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_090035.json
+[2026-04-15 09:00:35] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_090035.txt
+[2026-04-15 09:00:35] INFO     gerrit_reviewer — 전체 성공: 7 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_100002.log
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 10:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 7 건
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — 리뷰 대상: 7 건 — #80709, #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 10:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 10:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 10:00:02] INFO     batch_reviewer —   대상: 7 건  워커: 1  간격: 3.0s
+[2026-04-15 10:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 10:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:02] INFO     batch_reviewer — [1/7] 처리 중: #80709 ps1
+[2026-04-15 10:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80709 ps=1
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:02] INFO     gerrit_reviewer —   Change   : #80709  Patchset: 1
+[2026-04-15 10:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80709 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80709 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:05] INFO     batch_reviewer — [2/7] 처리 중: #80460 ps1
+[2026-04-15 10:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 10:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:05] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 10:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:08] INFO     batch_reviewer — [3/7] 처리 중: #79722 ps1
+[2026-04-15 10:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 10:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:08] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 10:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:11] INFO     batch_reviewer — [4/7] 처리 중: #80612 ps3
+[2026-04-15 10:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 10:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:11] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 10:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:14] INFO     batch_reviewer — [5/7] 처리 중: #80371 ps2
+[2026-04-15 10:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 10:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:14] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 10:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:17] INFO     batch_reviewer — [6/7] 처리 중: #76086 ps1
+[2026-04-15 10:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 10:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:17] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 10:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:20] INFO     batch_reviewer — [7/7] 처리 중: #80133 ps8
+[2026-04-15 10:00:20] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 10:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:20] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 10:00:20] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 10:00:20] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 10:00:20] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 10:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 10:00:20] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 10:00:20] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 10:00:20] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 10:00:20] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_100020.json
+[2026-04-15 10:00:20] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_100020.txt
+[2026-04-15 10:00:20] INFO     gerrit_reviewer — 전체 성공: 7 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_110002.log
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 11:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 11:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 11:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 11:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-15 11:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 11:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-15 11:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 11:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-15 11:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 11:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 11:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-15 11:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 11:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 11:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-15 11:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 11:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 11:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-15 11:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 11:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 11:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-15 11:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 11:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 11:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 11:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 11:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 11:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 11:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 11:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 11:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 11:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_110017.json
+[2026-04-15 11:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_110017.txt
+[2026-04-15 11:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_120002.log
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 12:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 12:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 12:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 12:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-15 12:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 12:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-15 12:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 12:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-15 12:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 12:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 12:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-15 12:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 12:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 12:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-15 12:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 12:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 12:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-15 12:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 12:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 12:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-15 12:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 12:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 12:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 12:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 12:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 12:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 12:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 12:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 12:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 12:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_120017.json
+[2026-04-15 12:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_120017.txt
+[2026-04-15 12:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_130002.log
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 13:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 6 건
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — 리뷰 대상: 6 건 — #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 13:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 13:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 13:00:02] INFO     batch_reviewer —   대상: 6 건  워커: 1  간격: 3.0s
+[2026-04-15 13:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 13:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:02] INFO     batch_reviewer — [1/6] 처리 중: #80460 ps1
+[2026-04-15 13:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:02] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 13:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:05] INFO     batch_reviewer — [2/6] 처리 중: #79722 ps1
+[2026-04-15 13:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 13:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:05] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 13:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:08] INFO     batch_reviewer — [3/6] 처리 중: #80612 ps3
+[2026-04-15 13:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 13:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:08] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 13:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:11] INFO     batch_reviewer — [4/6] 처리 중: #80371 ps2
+[2026-04-15 13:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 13:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:11] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 13:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:14] INFO     batch_reviewer — [5/6] 처리 중: #76086 ps1
+[2026-04-15 13:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 13:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:14] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 13:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:17] INFO     batch_reviewer — [6/6] 처리 중: #80133 ps8
+[2026-04-15 13:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 13:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 13:00:17] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 13:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 13:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 13:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 13:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 13:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 13:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 13:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_130017.json
+[2026-04-15 13:00:17] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_130017.txt
+[2026-04-15 13:00:17] INFO     gerrit_reviewer — 전체 성공: 6 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_140002.log
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 14:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 7 건
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — 리뷰 대상: 7 건 — #80714, #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 14:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 14:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 14:00:02] INFO     batch_reviewer —   대상: 7 건  워커: 1  간격: 3.0s
+[2026-04-15 14:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 14:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:00:02] INFO     batch_reviewer — [1/7] 처리 중: #80714 ps1
+[2026-04-15 14:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80714 ps=1
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   Change   : #80714  Patchset: 1
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — [1/5] 변경사항 정보 조회 중...
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   변경사항: #80714 [RG/dslpon/apollo] [RGSW-4134][HLS833W] Add initial Home Mobile about read path for 4 fields (author: Myungsoo Kim(김명수))
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — [2/5] 파일 diff 조회 및 필터링 중...
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   변경 파일 수: 9개 (max_files=50)
+[2026-04-15 14:00:02] INFO     scripts.gerrit_client — 변경 파일 수: 9 (max_files=50)
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   diff 획득: 9개 파일
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — [3/5] AI(gemini) 초기화 중...
+[2026-04-15 14:00:02] INFO     gerrit_reviewer —   AI 모델: gemini-3.1-pro-preview
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — [4/5] 배치 AI 코드 리뷰 실행 중... (파일 9개 → 배치 2개, 모델 한도 600,000 chars)
+[2026-04-15 14:00:02] INFO     gerrit_reviewer — [배치 재시도 레벨 0] 5개 파일 리뷰: ApiMobile.h, IFalMobile.h, IFalMobile.cpp 외 2개
+[2026-04-15 14:00:02] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-15 14:01:01] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-15 14:01:01] INFO     gerrit_reviewer —     [1/9] userspace/hmx/apps/rego/src-tr181/api/api_v1/inc/ApiMobile.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:01] INFO     gerrit_reviewer —     [2/9] userspace/hmx/apps/rego/src-tr181/fal/fal_al/inc/IFalMobile.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:01] INFO     gerrit_reviewer —     [3/9] userspace/hmx/apps/rego/src-tr181/fal/fal_al/src/IFalMobile.cpp  → 코멘트 1개 (C:0 M:0 m:1 I:0)
+[2026-04-15 14:01:01] INFO     gerrit_reviewer —     [4/9] userspace/hmx/apps/rego/src-tr181/fal/fal_api/inc/FalMobileApi.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:01] INFO     gerrit_reviewer —     [5/9] userspace/hmx/apps/rego/src-tr181/fal/fal_api/src/FalMobileApi.cpp  → 코멘트 1개 (C:0 M:1 m:0 I:0)
+[2026-04-15 14:01:01] INFO     gerrit_reviewer — [배치 재시도 레벨 0] 4개 파일 리뷰: hmx_mobile.h, hmx_mobile.c, be_comms.h 외 1개
+[2026-04-15 14:01:01] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-15 14:01:45] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —     [6/9] userspace/hmx/apps/rego/src-tr181/fal/fal_cms/inc/hmx_mobile.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —     [7/9] userspace/hmx/apps/rego/src-tr181/fal/fal_cms/src/hmx_mobile.c  → 코멘트 3개 (C:0 M:0 m:1 I:2)
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —     [8/9] userspace/hmx/apps/rego/src-tr181/utils/common/inc/be_comms.h → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —     [9/9] userspace/hmx/apps/rego/src-tr181/utils/common/src/be_comms.cpp → 인라인 코멘트 없음, 결과에서 제외
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —   배치 리뷰 완료: 파일 3개, 인라인 코멘트 총 5개 (2회 API 호출)
+[2026-04-15 14:01:45] INFO     gerrit_reviewer —   전체 요약 생성 중...
+[2026-04-15 14:01:45] INFO     google_genai.models — AFC is enabled with max remote calls: 10.
+[2026-04-15 14:02:00] INFO     httpx — HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent "HTTP/1.1 200 OK"
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   Code-Review 점수: +1
+[2026-04-15 14:02:00] INFO     gerrit_reviewer — 인라인 코멘트 총 5개 (파일 3개)
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   Gerrit 인라인 코멘트: 총 5개 (파일 3개)
+[2026-04-15 14:02:00] INFO     scripts.review_formatter — TEXT 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.txt
+[2026-04-15 14:02:00] INFO     scripts.review_formatter — MARKDOWN 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.md
+[2026-04-15 14:02:00] INFO     scripts.review_formatter — JSON 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.json
+[2026-04-15 14:02:00] INFO     scripts.review_formatter — HTML 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.html
+[2026-04-15 14:02:00] INFO     scripts.review_formatter — 전체 리뷰 결과 저장 완료: /home/hennylim/tools/gerrit-ai-reviewer-dev/output
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   저장: [TEXT] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.txt
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   저장: [MARKDOWN] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.md
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   저장: [JSON] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.json
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   저장: [HTML] /home/hennylim/tools/gerrit-ai-reviewer-dev/output/review_c80714_p1_20260415_140200.html
+[2026-04-15 14:02:00] INFO     gerrit_reviewer — [5/5] Gerrit 코드 리뷰 등록 중...
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   - 전체 요약 코멘트 + 인라인 코멘트 5개
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   → 인라인 코멘트 모드 (Gerrit 2.13.14)
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client — Gerrit 리뷰 등록 시작 [Gerrit 2.13.14 (지원 기능: labels, inline_comments)]
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client —   [FULL] 시도: 필드=['message', 'labels', 'comments']  메시지=756자  인라인=5개
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client —   [FULL] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client — 2단계: labels 제거 후 재시도...
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client —   [NO-LABELS] 시도: 필드=['message', 'comments']  메시지=756자  인라인=5개
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client —   [NO-LABELS] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client — 3단계: 메시지 추가 정제 후 재시도...
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client —   [SAFE-MSG] 시도: 필드=['message', 'comments']  메시지=756자  인라인=5개
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client —   [SAFE-MSG] 실패 HTTP 500 — 응답: Internal server error
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client — 4단계: 최소 코멘트만 등록 시도...
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client —   [MINIMAL] 시도: 필드=['message']  메시지=99자  인라인=0개
+[2026-04-15 14:02:00] INFO     scripts.gerrit_client —   [MINIMAL] 등록 완료: change=80714 ps=1  label=(없음)
+[2026-04-15 14:02:00] WARNING  scripts.gerrit_client —   => 최소 코멘트만 등록됨. 전체 리뷰는 output/ 디렉토리 파일을 확인하세요.
+[2026-04-15 14:02:00] INFO     gerrit_reviewer —   ✅ Gerrit 리뷰 등록 완료
+[2026-04-15 14:02:00] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:00] INFO     gerrit_reviewer — AI 코드 리뷰 완료  (총 117.8초)
+[2026-04-15 14:02:00] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:03] INFO     batch_reviewer — [2/7] 처리 중: #80460 ps1
+[2026-04-15 14:02:03] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 14:02:03] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:03] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:03] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 14:02:03] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:03] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:03] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:03] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:03] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:03] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:06] INFO     batch_reviewer — [3/7] 처리 중: #79722 ps1
+[2026-04-15 14:02:06] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 14:02:06] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:06] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:06] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 14:02:06] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:06] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:06] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:06] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:06] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:06] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:09] INFO     batch_reviewer — [4/7] 처리 중: #80612 ps3
+[2026-04-15 14:02:09] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 14:02:09] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:09] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:09] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 14:02:09] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:09] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:09] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:09] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:09] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:09] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:12] INFO     batch_reviewer — [5/7] 처리 중: #80371 ps2
+[2026-04-15 14:02:12] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 14:02:12] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:12] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:12] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 14:02:12] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:12] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:12] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:12] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:12] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:12] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:15] INFO     batch_reviewer — [6/7] 처리 중: #76086 ps1
+[2026-04-15 14:02:15] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 14:02:15] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:15] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:15] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 14:02:15] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:15] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:15] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:15] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:15] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:15] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:18] INFO     batch_reviewer — [7/7] 처리 중: #80133 ps8
+[2026-04-15 14:02:18] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 14:02:18] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:18] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 14:02:18] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 14:02:18] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 14:02:18] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 14:02:18] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 14:02:18] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 14:02:18] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 14:02:18] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 14:02:18] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_140218.json
+[2026-04-15 14:02:18] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_140218.txt
+[2026-04-15 14:02:18] INFO     gerrit_reviewer — 전체 성공: 7 건
+[0;34m[run_review][0m 시스템 Python 사용: /usr/bin/python3.10 (3.10)
+[0;34m[run_review][0m 배치 리뷰 실행...
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — 로그 파일: /home/hennylim/tools/gerrit-ai-reviewer-dev/logs/reviewer_20260415_150002.log
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — 배치 리뷰어 시작
+[2026-04-15 15:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:02] INFO     batch_reviewer — Gerrit 쿼리 '( status:open branch:catv ) OR ( status:open  reviewer:"(System)Jira_Git <jira_git@humax-networks.com>" )' → 7 건
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — 리뷰 대상: 7 건 — #80714, #80460, #79722, #80612, #80371, #76086, #80133
+[2026-04-15 15:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 15:00:02] INFO     batch_reviewer — 배치 AI 코드 리뷰 시작
+[2026-04-15 15:00:02] INFO     batch_reviewer —   대상: 7 건  워커: 1  간격: 3.0s
+[2026-04-15 15:00:02] INFO     batch_reviewer — ============================================================
+[2026-04-15 15:00:02] INFO     scripts.gerrit_client — Gerrit 버전 감지: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:02] INFO     batch_reviewer — 공유 GerritClient 초기화: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:02] INFO     batch_reviewer — [1/7] 처리 중: #80714 ps1
+[2026-04-15 15:00:02] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80714 ps=1
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:02] INFO     gerrit_reviewer —   Change   : #80714  Patchset: 1
+[2026-04-15 15:00:02] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:02] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:02] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:02] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80714 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:02] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80714 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:05] INFO     batch_reviewer — [2/7] 처리 중: #80460 ps1
+[2026-04-15 15:00:05] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80460 ps=1
+[2026-04-15 15:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:05] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:05] INFO     gerrit_reviewer —   Change   : #80460  Patchset: 1
+[2026-04-15 15:00:05] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:05] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:05] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:05] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:05] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80460 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:05] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80460 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:08] INFO     batch_reviewer — [3/7] 처리 중: #79722 ps1
+[2026-04-15 15:00:08] INFO     batch_reviewer — ▶ 리뷰 시작: change=#79722 ps=1
+[2026-04-15 15:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:08] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:08] INFO     gerrit_reviewer —   Change   : #79722  Patchset: 1
+[2026-04-15 15:00:08] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:08] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:08] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:08] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:08] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#79722 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:08] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#79722 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:11] INFO     batch_reviewer — [4/7] 처리 중: #80612 ps3
+[2026-04-15 15:00:11] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80612 ps=3
+[2026-04-15 15:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:11] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:11] INFO     gerrit_reviewer —   Change   : #80612  Patchset: 3
+[2026-04-15 15:00:11] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:11] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:11] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:11] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:11] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80612 ps=3 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:11] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80612 ps=3 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:14] INFO     batch_reviewer — [5/7] 처리 중: #80371 ps2
+[2026-04-15 15:00:14] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80371 ps=2
+[2026-04-15 15:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:14] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:14] INFO     gerrit_reviewer —   Change   : #80371  Patchset: 2
+[2026-04-15 15:00:14] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:14] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:14] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:14] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:14] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80371 ps=2 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:14] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80371 ps=2 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:17] INFO     batch_reviewer — [6/7] 처리 중: #76086 ps1
+[2026-04-15 15:00:17] INFO     batch_reviewer — ▶ 리뷰 시작: change=#76086 ps=1
+[2026-04-15 15:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:17] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:17] INFO     gerrit_reviewer —   Change   : #76086  Patchset: 1
+[2026-04-15 15:00:17] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:17] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:17] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:17] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:17] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#76086 ps=1 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:17] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#76086 ps=1 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:20] INFO     batch_reviewer — [7/7] 처리 중: #80133 ps8
+[2026-04-15 15:00:20] INFO     batch_reviewer — ▶ 리뷰 시작: change=#80133 ps=8
+[2026-04-15 15:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:20] INFO     gerrit_reviewer — AI 코드 리뷰 시작
+[2026-04-15 15:00:20] INFO     gerrit_reviewer —   Change   : #80133  Patchset: 8
+[2026-04-15 15:00:20] INFO     gerrit_reviewer —   DRY-RUN  : False  NO-POST: False  FORCE: False
+[2026-04-15 15:00:20] INFO     gerrit_reviewer —   Provider : gemini  Model: gemini-3.1-pro-preview
+[2026-04-15 15:00:20] INFO     gerrit_reviewer — ============================================================
+[2026-04-15 15:00:20] INFO     gerrit_reviewer —   Gerrit 버전: Gerrit 2.13.14 (지원 기능: labels, inline_comments)
+[2026-04-15 15:00:20] INFO     scripts.gerrit_client — 중복 리뷰 감지: change=#80133 ps=8 — username=jira_git 기존 코멘트
+[2026-04-15 15:00:20] INFO     gerrit_reviewer — 중복 리뷰 건너뜀: change=#80133 ps=8 — 이미 AI 리뷰 등록됨
+[2026-04-15 15:00:20] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_150020.json
+[2026-04-15 15:00:20] INFO     batch_reviewer — 배치 요약 저장: /home/hennylim/tools/gerrit-ai-reviewer-dev/output/batch_summary_20260415_150020.txt
+[2026-04-15 15:00:20] INFO     gerrit_reviewer — 전체 성공: 7 건
