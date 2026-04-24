@@ -31,7 +31,7 @@ PROJECT_DIR = SCRIPT_DIR.parent
 sys.path.insert(0, str(PROJECT_DIR))       # ai_chat 패키지 탐색 경로
 
 from ai_chat import create_ai
-from scripts.gerrit_client   import FileDiff, GerritClient, ReviewInput
+from scripts.gerrit_client   import GerritClient, ReviewInput
 from scripts.review_formatter import ReviewFormatter, ReviewResult
 
 logger = logging.getLogger("gerrit_reviewer")
@@ -136,7 +136,7 @@ def build_inline_review_prompt(
     subject:      str,
     project:      str,
     branch:       str,
-    diff:         FileDiff,        # FileDiff 객체
+    diff:         "FileDiff",        # FileDiff 객체
     prompt_cfg:   dict,
 ) -> str:
     """
