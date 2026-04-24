@@ -1449,7 +1449,7 @@ def run_review(
 
     if not reviewed_files:
         logger.info("  인라인 코멘트가 있는 파일이 없어 전체 요약을 생성하지 않습니다.")
-        review_summary = "[AI 리뷰] 리뷰 결과 특이사항이 없어 전체 요약을 생략합니다."
+        review_summary = "[AI 리뷰] 리뷰 결과 특이사항이 없습니다."  # 간단한 기본 메시지
         if skip_note:
             review_summary += skip_note
         overall_score = 0
@@ -1458,6 +1458,7 @@ def run_review(
         summary_resp = ai.chat(summary_prompt)
 
         if not summary_resp.success:
+            logger.error("  전체 요약 생성 실패: %s", summary_resp.error)
             review_summary = "전체 요약 생성 실패: " + (summary_resp.error or "")
             overall_score = 0
         else:
@@ -1503,6 +1504,12 @@ def run_review(
             "[5/5] AI 호출 전체 실패 — Gerrit 등록 생략 (다음 실행에서 재시도됩니다.)"
         )
         result.error = "AI 호출 전체 실패로 Gerrit 등록 생략"
+    elif not summary_resp.success:
+        # 배치 AI 호출이 실패한 경우 (개별 폴백도 모두 실패했을 때)
+        logger.warning(
+            "[5/5] AI 호출 실패 — Gerrit 등록 생략: %s", summary_resp.error
+        )
+        result.error = f"AI 호출 실패로 Gerrit 등록 생략: {summary_resp.error}"
     else:
         logger.info("[5/5] Gerrit 코드 리뷰 등록 중...")
         logger.info("  - 전체 요약 코멘트 + 인라인 코멘트 %d개", total_inline)
