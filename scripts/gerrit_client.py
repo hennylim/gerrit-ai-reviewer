@@ -122,7 +122,12 @@ class FileDiff:
     change_type:    str = "MODIFIED"
     lines_inserted: int = 0
     lines_deleted:  int = 0
-    diff_content:   str = ""
+    diff_content:    str  = ""
+    # ── 라인 번호 정확성 보조 필드 ─────────────────────────────────────────
+    # valid_new_lines : RIGHT(REVISION) side 코멘트 가능한 실제 파일 라인 번호 목록
+    # annotated_diff  : 실제 파일 라인 번호가 주석으로 달린 diff (AI 프롬프트용)
+    valid_new_lines: list = field(default_factory=list)
+    annotated_diff:  str  = ""
 
 
 @dataclass
@@ -489,14 +494,19 @@ class GerritClient:
         #
         # @@ 헝크 헤더를 올바르게 생성해야 _extract_added_lines()가
         # 정확한 NEW 파일 라인 번호를 추출할 수 있음.
-        diff_lines     = []
-        lines_inserted = 0
-        lines_deleted  = 0
-        old_line       = 1   # 이전 파일(a) 기준 현재 라인 번호
-        new_line       = 1   # 새 파일(b) 기준 현재 라인 번호
+        diff_lines      = []
+        ann_lines       = []   # annotated diff (라인 번호 명시, AI 프롬프트용)
+        valid_new_lines = []   # 추가된 줄의 실제 파일 라인 번호 (RIGHT side)
+        lines_inserted  = 0
+        lines_deleted   = 0
+        old_line        = 1   # 이전 파일(a) 기준 현재 라인 번호
+        new_line        = 1   # 새 파일(b) 기준 현재 라인 번호
 
         diff_lines.append(f"--- a/{old_path}")
         diff_lines.append(f"+++ b/{filename}")
+        ann_lines.append(f"--- a/{old_path}")
+        ann_lines.append(f"+++ b/{filename}")
+        ann_lines.append("형식: [A 라인번호] = 추가줄(RIGHT), [D 라인번호] = 삭제줄(LEFT), [  라인번호] = 컨텍스트")
 
         for section in data.get("content", []):
             skip = section.get("skip", 0)
@@ -504,6 +514,7 @@ class GerritClient:
                 # 생략 구간: 라인 번호만 전진
                 old_line += skip
                 new_line += skip
+                ann_lines.append(f"... ({skip}줄 생략) ...")
                 continue
 
             ab_lines = section.get("ab", [])
@@ -520,14 +531,21 @@ class GerritClient:
 
             for line in ab_lines:
                 diff_lines.append(f" {line}")
+                # annotated: 컨텍스트 줄 — new_line 기준으로 표시
+                ann_lines.append(f"[  {new_line:4d}]  {line}")
                 old_line += 1
                 new_line += 1
             for line in a_lines:
                 diff_lines.append(f"-{line}")
+                # annotated: 삭제 줄 — LEFT(PARENT) side 코멘트시 이 번호 사용
+                ann_lines.append(f"[D {old_line:4d}] -{line}")
                 old_line += 1
                 lines_deleted += 1
             for line in b_lines:
                 diff_lines.append(f"+{line}")
+                # annotated: 추가 줄 — RIGHT(REVISION) side 코멘트시 이 번호 사용
+                ann_lines.append(f"[A {new_line:4d}] +{line}")
+                valid_new_lines.append(new_line)
                 new_line += 1
                 lines_inserted += 1
 
@@ -535,6 +553,8 @@ class GerritClient:
             filename=filename, old_path=old_path, change_type=change_type,
             lines_inserted=lines_inserted, lines_deleted=lines_deleted,
             diff_content="\n".join(diff_lines),
+            valid_new_lines=valid_new_lines,
+            annotated_diff="\n".join(ann_lines),
         )
 
     def get_all_diffs(
