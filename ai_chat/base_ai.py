@@ -137,6 +137,11 @@ class ChatResponse:
 class BaseAI(ABC):
     """모든 AI 제공자의 추상 베이스 클래스."""
 
+    # ── 일관성 기본값 ────────────────────────────────────────────────────────
+    # temperature 를 낮게 유지하면 같은 코드를 반복 리뷰할 때 결과가 안정적으로 유지됩니다.
+    # 0.0 = 완전 결정론적(캐싱 효과), 0.2 = 일관성과 유용성의 균형점 (권장)
+    DEFAULT_TEMPERATURE: float = 0.2
+
     def __init__(
         self,
         api_key:     str,
@@ -145,6 +150,7 @@ class BaseAI(ABC):
         web_search:  bool  = False,
         retry_count: int   = DEFAULT_RETRY_COUNT,
         retry_delay: float = DEFAULT_RETRY_DELAY,
+        temperature: float | None = None,   # None이면 DEFAULT_TEMPERATURE 사용
     ):
         """
         Args:
@@ -154,6 +160,8 @@ class BaseAI(ABC):
             web_search:  True이면 실시간 웹 검색 도구 활성화
             retry_count: 일시적 오류 발생 시 최대 재시도 횟수 (기본 3)
             retry_delay: 첫 재시도 대기 시간(초), 이후 2배씩 증가 (기본 5초)
+            temperature: 생성 무작위성 (0.0~1.0). 낮을수록 일관된 리뷰 결과 생성.
+                         코드 리뷰 특성상 0.2 이하를 권장. (기본 DEFAULT_TEMPERATURE=0.2)
         """
         self.api_key     = api_key
         self.model       = model or self.default_model
@@ -161,6 +169,7 @@ class BaseAI(ABC):
         self.web_search  = web_search
         self.retry_count = retry_count
         self.retry_delay = retry_delay
+        self.temperature = temperature if temperature is not None else self.DEFAULT_TEMPERATURE
 
     @property
     @abstractmethod

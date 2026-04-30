@@ -79,7 +79,7 @@ class GeminiAI(BaseAI):
         web_search:        bool  = False,
         retry_count:       int   = 3,
         retry_delay:       float = 5.0,
-        temperature:       float = 0.7,
+        temperature:       float = 0.2,  # 낮을수록 일관된 리뷰 (권장 0.2 이하)
         max_output_tokens: int   = 8192,
     ):
         super().__init__(api_key=api_key, model=model, dry_run=dry_run, web_search=web_search, retry_count=retry_count, retry_delay=retry_delay)

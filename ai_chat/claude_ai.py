@@ -89,8 +89,10 @@ class ClaudeAI(BaseAI):
         retry_count: int   = 3,
         retry_delay: float = 5.0,
         max_tokens:  int   = 8192,
+        temperature: float | None = None,
     ):
-        super().__init__(api_key=api_key, model=model, dry_run=dry_run, web_search=web_search, retry_count=retry_count, retry_delay=retry_delay)
+        super().__init__(api_key=api_key, model=model, dry_run=dry_run, web_search=web_search,
+                         retry_count=retry_count, retry_delay=retry_delay, temperature=temperature)
         self.max_tokens = max_tokens
         self._client    = None
 
@@ -163,6 +165,7 @@ class ClaudeAI(BaseAI):
             kwargs = dict(
                 model=self.model,
                 max_tokens=self.max_tokens,
+                temperature=self.temperature,   # 일관성 유지 (기본 0.2)
                 messages=[{"role": "user", "content": prompt}],
             )
             if tools:
