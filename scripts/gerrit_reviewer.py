@@ -1579,7 +1579,7 @@ def run_review(
         review_summary = "[AI 리뷰] 리뷰 결과 특이사항이 없습니다."  # 간단한 기본 메시지
         if skip_note:
             review_summary += skip_note
-        overall_score = 0
+        overall_score = 1
     else:
         summary_prompt = build_summary_prompt(reviewed_files, change.subject, prompt_cfg)
         summary_resp = ai.chat(summary_prompt)
