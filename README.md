@@ -16,7 +16,8 @@ gerrit-ai-reviewer/
 │   ├── base_ai.py                  ← 추상 베이스 클래스
 │   ├── claude_ai.py                ← Anthropic Claude 구현
 │   ├── gemini_ai.py                ← Google Gemini 구현
-│   └── openai_ai.py                ← OpenAI GPT 구현
+│   ├── openai_ai.py                ← OpenAI GPT 구현
+│   └── ollama_ai.py                ← Ollama 로컬 LLM 구현 (gemma4:e4b 등)
 │
 ├── config/
 │   ├── api_keys.json               ★ AI API 키 (반드시 설정)
@@ -80,7 +81,8 @@ gerrit-ai-reviewer/
 |------|------------|
 | Python | 3.10 이상 |
 | Gerrit | 2.15 이상 (REST API + Hook 지원) |
-| AI API | Claude / Gemini / OpenAI 중 하나 이상 |
+| AI API | Claude / Gemini / OpenAI / Ollama 중 하나 이상 |
+| Ollama | 0.3.0 이상 (로컬 LLM 사용 시만 필요) |
 
 ---
 
@@ -212,11 +214,13 @@ vi config/api_keys.json
 {
   "claude": { "api_key": "sk-ant-api03-XXXXXXXX" },
   "gemini": { "api_key": "AIzaXXXXXXXX" },
-  "openai": { "api_key": "sk-XXXXXXXX" }
+  "openai": { "api_key": "sk-XXXXXXXX" },
+  "ollama": { "api_key": "http://localhost:11434" }
 }
 ```
 
-> 사용할 AI 제공자의 키만 입력하면 됩니다.
+> 사용할 AI 제공자의 키만 입력하면 됩니다.  
+> Ollama는 API 키 대신 서버 주소를 입력합니다. 항목 자체를 생략해도 `localhost:11434`가 기본값으로 사용됩니다.
 
 ---
 
@@ -395,8 +399,244 @@ source .env
 | `claude` | claude-opus-4-6 |
 | `gemini` | gemini-1.5-pro |
 | `openai` | gpt-4o |
+| `ollama` | gemma4:e4b |
 
 ---
+
+---
+
+## 🦙 Ollama 로컬 LLM 사용 가이드
+
+API 비용 없이 로컬 GPU/CPU에서 오픈소스 모델로 코드 리뷰를 실행할 수 있습니다.  
+네트워크가 분리된 사내 환경이나 데이터 외부 유출이 우려되는 경우에 특히 유용합니다.
+
+---
+
+### 📋 개요
+
+| 항목 | 내용 |
+|------|------|
+| API 비용 | 없음 (로컬 실행) |
+| 인터넷 연결 | 모델 최초 다운로드 시만 필요 |
+| 기본 모델 | `gemma4:e4b` (Google Gemma 4, E4B 양자화) |
+| 웹 검색 | 미지원 |
+| SDK 의존성 | 없음 (Python 내장 `urllib` 사용) |
+
+---
+
+### 1️⃣ Ollama 설치
+
+**macOS / Linux:**
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Windows:**
+
+[https://ollama.com/download](https://ollama.com/download) 에서 설치 파일 다운로드
+
+**설치 확인:**
+
+```bash
+ollama --version
+# ollama version 0.x.x
+
+# 서버 상태 확인
+curl http://localhost:11434/api/tags
+```
+
+---
+
+### 2️⃣ 모델 다운로드
+
+#### 기본 모델 — gemma4:e4b (권장)
+
+```bash
+ollama pull gemma4:e4b
+```
+
+| 항목 | 내용 |
+|------|------|
+| 용량 | 약 5 GB |
+| VRAM | 약 8 GB (CPU 실행도 가능, 단 느림) |
+| 컨텍스트 | 128K 토큰 |
+| 특징 | Google Gemma 4, E4B 양자화로 경량화. 코드 이해력 우수. |
+
+#### 대안 모델
+
+| 모델명 | 용량 | VRAM | 특징 |
+|--------|------|------|------|
+| `gemma4:e4b` ★ | ~5 GB | 8 GB | 기본값, 경량·균형 |
+| `gemma3:27b` | ~16 GB | 16 GB | Gemma 3 최대 크기 |
+| `qwen2.5-coder:32b` | ~20 GB | 20 GB | 코드 특화, 성능 최고 |
+| `qwen2.5-coder:7b` | ~4 GB | 6 GB | 코드 특화 경량 |
+| `llama3.1:70b` | ~40 GB | 40 GB | Meta 범용 최대 |
+| `llama3.1:8b` | ~5 GB | 6 GB | Meta 경량 |
+| `deepseek-coder-v2:16b` | ~10 GB | 10 GB | 코드 특화 중형 |
+
+```bash
+# 원하는 모델 다운로드
+ollama pull qwen2.5-coder:32b
+
+# 설치된 모델 목록 확인
+ollama list
+```
+
+---
+
+### 3️⃣ Gerrit AI Reviewer 설정
+
+#### `config/api_keys.json`
+
+```json
+{
+  "ollama": {
+    "api_key": "http://localhost:11434"
+  }
+}
+```
+
+> Ollama 서버가 다른 장비에 있으면 주소를 변경합니다.  
+> 예: `"http://192.168.1.100:11434"`  
+> 항목을 아예 생략해도 `localhost:11434`가 기본값으로 사용됩니다.
+
+#### `config/reviewer_config.json`
+
+```json
+{
+  "ai": {
+    "provider": "ollama",
+    "model":    "gemma4:e4b",
+    "temperature": 0.1
+  }
+}
+```
+
+> `temperature`는 낮을수록 일관된 리뷰를 생성합니다.  
+> 로컬 모델은 클라우드 모델보다 지시 이행력이 낮을 수 있으므로 `0.0~0.1`을 권장합니다.
+
+---
+
+### 4️⃣ 연결 및 동작 확인
+
+#### 연결 테스트
+
+```bash
+# Gerrit AI Reviewer 전체 진단 (Ollama 포함)
+./run_review.sh --test --provider ollama
+
+# Ollama 서버만 직접 확인
+curl http://localhost:11434/api/tags
+```
+
+#### DRY-RUN으로 흐름 검증 (API 호출 없음)
+
+```bash
+./run_review.sh --change 12345 --patchset 1 --provider ollama --dry-run --verbose
+```
+
+#### NO-POST로 리뷰 품질 확인 (Gerrit 미등록)
+
+```bash
+./run_review.sh --change 12345 --patchset 1 --provider ollama --no-post
+
+# 결과 HTML로 확인
+open output/review_c12345_p1_*.html        # macOS
+xdg-open output/review_c12345_p1_*.html   # Linux
+```
+
+#### 실제 등록
+
+```bash
+./run_review.sh --change 12345 --patchset 1 --provider ollama
+```
+
+---
+
+### 5️⃣ CLI에서 모델 즉시 전환
+
+```bash
+# config 변경 없이 CLI에서 직접 모델 지정
+./run_review.sh --change 12345 --patchset 1 \
+  --provider ollama --model qwen2.5-coder:32b
+
+# 배치 처리도 동일하게 적용
+./run_review.sh --batch --changes 100 101 102 \
+  --provider ollama --model gemma4:e4b
+```
+
+---
+
+### 6️⃣ 고급 설정 — `reviewer_config.json`
+
+```json
+{
+  "ai": {
+    "provider":    "ollama",
+    "model":       "gemma4:e4b",
+    "temperature": 0.1,
+
+    "_ollama_advanced": "아래 항목은 OllamaAI 전용 파라미터입니다",
+    "num_ctx":    65536,
+    "max_tokens": 8192,
+    "timeout":    600
+  }
+}
+```
+
+| 파라미터 | 기본값 | 설명 |
+|----------|--------|------|
+| `temperature` | `0.2` | 낮을수록 일관된 응답. 로컬 모델은 `0.0~0.1` 권장 |
+| `num_ctx` | `32768` | 컨텍스트 윈도우 크기 (토큰). 클수록 VRAM 사용량 증가 |
+| `max_tokens` | `8192` | 최대 출력 토큰 수 |
+| `timeout` | `300` | 응답 타임아웃(초). 대형 모델·CPU 실행 시 늘릴 것 |
+
+---
+
+### 7️⃣ 원격 Ollama 서버 연동
+
+GPU 서버를 별도로 운용하는 경우 원격에서 접속할 수 있습니다.
+
+**GPU 서버 (Ollama 실행):**
+
+```bash
+# 외부 접속 허용 (기본은 localhost만 수신)
+OLLAMA_HOST=0.0.0.0 ollama serve
+
+# 또는 서비스 설정 (systemd)
+# /etc/systemd/system/ollama.service.d/override.conf
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+```
+
+**리뷰어 서버 (`api_keys.json`):**
+
+```json
+{
+  "ollama": {
+    "api_key": "http://gpu-server.internal:11434"
+  }
+}
+```
+
+> 보안을 위해 방화벽으로 11434 포트를 내부망으로 제한하거나  
+> Nginx 리버스 프록시 + HTTPS + 기본 인증을 적용하는 것을 권장합니다.
+
+---
+
+### 8️⃣ 성능 비교 (참고)
+
+| 모델 | 응답 시간 (PR 1건) | 품질 | 비용 |
+|------|--------------------|------|------|
+| Claude Sonnet 4.6 | 5~15초 | ★★★★★ | $0.09 |
+| GPT-4o | 5~20초 | ★★★★☆ | $0.07 |
+| **gemma4:e4b** (RTX 4090) | 20~60초 | ★★★☆☆ | 무료 |
+| qwen2.5-coder:32b (A100) | 15~40초 | ★★★★☆ | 무료 |
+| gemma4:e4b (CPU only) | 3~10분 | ★★★☆☆ | 무료 |
+
+> 응답 시간은 하드웨어, 모델 크기, 코드 diff 크기에 따라 크게 달라집니다.  
+> `timeout` 파라미터를 환경에 맞게 조정하세요.
 
 ## ❓ 문제 해결
 
@@ -409,3 +649,7 @@ source .env
 | Python 버전 오류 | Python 3.10 미만 | `export REVIEWER_PYTHON=/usr/bin/python3.11` |
 | AI API 오류 | 키 오류 또는 할당량 초과 | `./run_review.sh --test --ai-only` 로 진단 |
 | 인라인 코멘트 미등록 | 라인 번호 범위 초과 | `logs/reviewer_*.log` 에서 422 오류 확인 |
+| Ollama 연결 실패 | 서버 미실행 | `ollama serve` 또는 `systemctl start ollama` |
+| Ollama 모델 없음 | 모델 미설치 | `ollama pull gemma4:e4b` |
+| Ollama 응답 시간 초과 | 모델 크기 / CPU 실행 | `timeout` 값 증가 (예: 600), GPU 사용 권장 |
+| Ollama 응답 품질 낮음 | 모델 역량 / temperature | 더 큰 모델 사용 또는 `temperature: 0.0`으로 설정 |

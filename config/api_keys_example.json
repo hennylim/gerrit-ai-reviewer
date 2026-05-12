@@ -1,0 +1,25 @@
+{
+  "_comment": "AI 서비스 API 키 설정 — 실제 키로 교체 후 사용하세요",
+
+  "claude": {
+    "api_key": "YOUR_ANTHROPIC_API_KEY"
+  },
+
+  "gemini": {
+    "api_key": "YOUR_GMINI_API_KEY"
+  },
+
+  "openai": {
+    "api_key": "YOUR_OPENAI_API_KEY"
+  },
+  
+  "ollama": {
+    "api_key": "http://localhost:11434",
+    "_comment": "Ollama 서버 주소. api_key 필드에 서버 URL을 입력합니다. 원격: http://192.168.1.x:11434"
+  },
+  
+  "lmstudio": {
+    "api_key": "http://localhost:1234",
+    "_comment": "lmstudio 서버 주소. api_key 필드에 서버 URL을 입력합니다. 원격: http://192.168.1.x:1234"
+  }
+}

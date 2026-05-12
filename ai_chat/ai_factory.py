@@ -19,6 +19,8 @@ from .base_ai import BaseAI
 from .gemini_ai import GeminiAI
 from .openai_ai import OpenAIChat
 from .claude_ai import ClaudeAI
+from .ollama_ai    import OllamaAI
+from .lmstudio_ai  import LMStudioAI
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,8 @@ AI_REGISTRY: Dict[str, Type[BaseAI]] = {
     "gemini":    GeminiAI,
     "openai":    OpenAIChat,
     "claude":    ClaudeAI,
+    "ollama":    OllamaAI,    # 로컬 LLM (gemma4:e4b, llama3 등)
+    "lmstudio":  LMStudioAI,  # LM Studio 로컬 LLM (GGUF 모델)
     # "mistral": MistralAI,  ← 새 AI 추가 예시
 }
 
@@ -106,14 +110,30 @@ def create_ai(
     # API 키 로드
     keys = load_api_keys(config_path)
 
+    # Ollama는 api_key 대신 서버 주소를 사용하므로 누락 시 기본값으로 대체
+    _KEY_OPTIONAL_PROVIDERS = {"ollama", "lmstudio"}
+
     if provider_lower not in keys:
-        raise KeyError(
-            f"api_keys.json 에 '{provider_lower}' 항목이 없습니다."
-        )
+        if provider_lower in _KEY_OPTIONAL_PROVIDERS:
+            # Ollama/LMStudio: api_keys.json 항목 없으면 기본 localhost 사용
+            _default_hosts = {
+                "ollama":    "http://localhost:11434",
+                "lmstudio":  "http://localhost:1234",
+            }
+            default_host = _default_hosts.get(provider_lower, "http://localhost")
+            logger.info(
+                "'%s': api_keys.json 항목 없음 → 기본 서버 주소 사용 (%s)",
+                provider, default_host,
+            )
+            keys[provider_lower] = {"api_key": default_host}
+        else:
+            raise KeyError(
+                f"api_keys.json 에 '{provider_lower}' 항목이 없습니다."
+            )
 
     api_key = keys[provider_lower].get("api_key", "")
     if not api_key or api_key.startswith("YOUR_"):
-        if not dry_run:
+        if provider_lower not in _KEY_OPTIONAL_PROVIDERS and not dry_run:
             logger.warning(
                 "'%s' API 키가 설정되지 않았습니다. --dry-run 모드를 사용하세요.", provider
             )
