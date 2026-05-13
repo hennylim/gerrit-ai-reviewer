@@ -51,6 +51,7 @@ class GeminiAI(BaseAI):
     """
 
     FREE_TIER_MODELS = [
+        "gemini-3-flash",
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
         "gemini-3-flash-preview",
@@ -97,7 +98,7 @@ class GeminiAI(BaseAI):
 
     @property
     def default_model(self) -> str:
-        return "gemini-2.5-flash"
+        return "gemini-3-flash-preview"
 
     def _get_client(self):
         if self._client is None:
