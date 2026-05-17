@@ -38,7 +38,13 @@ import urllib.error
 import urllib.request
 from typing import Optional
 
-from .base_ai import BaseAI, ChatResponse
+try:
+    from duckduckgo_search import DDGS
+    DDGS_AVAILABLE = True
+except ImportError:
+    DDGS_AVAILABLE = False
+
+from .base_ai import BaseAI, ChatResponse, SearchSource
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +76,24 @@ class OllamaAI(BaseAI):
         기본값: "http://localhost:11434"
         원격 서버: "http://192.168.1.100:11434"
     """
+
+    _WEB_SEARCH_TOOL = {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "웹에서 최신 정보를 검색합니다.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "검색어 (예: '오늘 서울 날씨')"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    }
 
     def __init__(
         self,
@@ -115,11 +139,12 @@ class OllamaAI(BaseAI):
         self.num_ctx    = num_ctx
         self.timeout    = timeout
 
-        if web_search:
+        if web_search and not DDGS_AVAILABLE:
             logger.warning(
-                "⚠️  Ollama는 웹 검색(web_search)을 지원하지 않습니다. "
-                "해당 옵션은 무시됩니다."
+                "⚠️  duckduckgo-search 패키지가 설치되지 않아 웹 검색이 비활성화됩니다. "
+                "pip install duckduckgo-search"
             )
+            self.web_search = False
 
     # ── BaseAI 추상 메서드 구현 ───────────────────────────────────────────
 
@@ -206,12 +231,12 @@ class OllamaAI(BaseAI):
         """
         start_time = time.time()
 
-        url     = f"{self.host}{_CHAT_PATH}"
+        url      = f"{self.host}{_CHAT_PATH}"
+        messages = [{"role": "user", "content": prompt}]
+        
         payload = {
             "model": self.model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": messages,
             "stream": False,   # 스트리밍 비활성화 (단일 응답 수신)
             "options": {
                 "temperature": self.temperature,
@@ -220,40 +245,78 @@ class OllamaAI(BaseAI):
             },
         }
 
-        try:
-            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        if self.web_search:
+            payload["tools"] = [self._WEB_SEARCH_TOOL]
+
+        search_sources: list[SearchSource] = []
+        search_used = False
+
+        def _do_request(curr_payload: dict) -> dict:
+            body = json.dumps(curr_payload, ensure_ascii=False).encode("utf-8")
             req  = urllib.request.Request(
                 url,
                 data=body,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-
             logger.debug(
                 "Ollama 요청: model=%s, temperature=%.2f, num_ctx=%d, url=%s",
                 self.model, self.temperature, self.num_ctx, url,
             )
-
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                raw  = resp.read().decode("utf-8")
-                data = json.loads(raw)
+                raw = resp.read().decode("utf-8")
+                return json.loads(raw)
 
+        try:
+            data = _do_request(payload)
             elapsed = time.time() - start_time
 
             # ── 응답 파싱 ──────────────────────────────────────────────────
-            # Ollama /api/chat 응답 구조:
-            # {
-            #   "model": "gemma4:e4b",
-            #   "message": {"role": "assistant", "content": "..."},
-            #   "done": true,
-            #   "total_duration": 12345678,
-            #   "prompt_eval_count": 1500,
-            #   "eval_count": 300,
-            # }
             message = data.get("message", {})
+            tool_calls = message.get("tool_calls", [])
+
+            # ── 툴 호출(웹 검색) 처리 ──────────────────────────────────────
+            if tool_calls and self.web_search:
+                search_used = True
+                messages.append(message)  # assistant의 tool_call 메시지 추가
+                
+                for tool_call in tool_calls:
+                    function_name = tool_call.get("function", {}).get("name")
+                    arguments = tool_call.get("function", {}).get("arguments", {})
+                    
+                    if function_name == "web_search":
+                        query = arguments.get("query", "")
+                        logger.info("Ollama 웹 검색 실행: %s", query)
+                        
+                        try:
+                            results = DDGS().text(query, max_results=3)
+                            search_text = ""
+                            for r in results:
+                                search_text += f"제목: {r.get('title')}\n내용: {r.get('body')}\n\n"
+                                if r.get("href"):
+                                    search_sources.append(SearchSource(title=r.get("title", ""), url=r.get("href", "")))
+                            if not search_text:
+                                search_text = "검색 결과가 없습니다."
+                        except Exception as e:
+                            logger.error("웹 검색 실패: %s", e)
+                            search_text = f"웹 검색에 실패했습니다: {e}"
+                        
+                        messages.append({
+                            "role": "tool",
+                            "content": search_text,
+                        })
+                
+                # 툴 결과를 포함하여 2차 요청
+                payload["messages"] = messages
+                payload.pop("tools", None)  # 2차 요청 시에는 도구 사용 비활성화
+                
+                data = _do_request(payload)
+                elapsed = time.time() - start_time
+                message = data.get("message", {})
+
             content = message.get("content", "").strip()
 
-            if not content:
+            if not content and not tool_calls:
                 return ChatResponse(
                     prompt=prompt,
                     answer="",
@@ -282,6 +345,8 @@ class OllamaAI(BaseAI):
                 provider=self.provider_name,
                 elapsed_seconds=elapsed,
                 tokens_used=total_tokens,
+                web_search_used=search_used,
+                search_sources=search_sources,
             )
 
         except urllib.error.URLError as e:
@@ -342,3 +407,25 @@ class OllamaAI(BaseAI):
             "model is being loaded", # 모델 로딩 중
         ]
         return base_retryable or any(p in error_msg for p in ollama_patterns)
+
+    # ── 모델 나열 메서드 ──────────────────────────────────────────────────
+    @classmethod
+    def list_models(cls, host: str = DEFAULT_HOST) -> list[str]:
+        """
+        Ollama 서버에서 사용 가능한 모델 목록을 반환합니다.
+
+        Args:
+            host: Ollama 서버 주소
+
+        Returns:
+            모델명 리스트
+        """
+        try:
+            resp = requests.get(f"{host}/api/tags", timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            return [m["name"] for m in data.get("models", [])]
+        except Exception:
+            return []
+
+    # 

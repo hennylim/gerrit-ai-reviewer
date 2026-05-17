@@ -4,6 +4,9 @@
 # ── HTTP 요청 (Gerrit REST API) ────────────────────────────────────────────────
 requests>=2.31.0
 
+# ── 검색 도구 ────────────────────────────────────────────────────────────────
+duckduckgo-search>=6.0.0   # 웹 검색 (provider: ollama)
+
 # ── AI SDK (사용할 제공자에 맞춰 설치) ────────────────────────────────────────
 anthropic>=0.40.0          # Claude  (provider: claude)
 google-genai>=1.0.0        # Gemini  (provider: gemini)
