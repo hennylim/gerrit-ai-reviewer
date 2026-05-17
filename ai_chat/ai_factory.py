@@ -21,6 +21,7 @@ from .openai_ai import OpenAIChat
 from .claude_ai import ClaudeAI
 from .ollama_ai    import OllamaAI
 from .lmstudio_ai  import LMStudioAI
+from .lmx_ai       import LmxAI
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ AI_REGISTRY: Dict[str, Type[BaseAI]] = {
     "claude":    ClaudeAI,
     "ollama":    OllamaAI,    # 로컬 LLM (gemma4:e4b, llama3 등)
     "lmstudio":  LMStudioAI,  # LM Studio 로컬 LLM (GGUF 모델)
+    "lmx":       LmxAI,       # LMX AI (OpenAI 호환)
     # "mistral": MistralAI,  ← 새 AI 추가 예시
 }
 
@@ -131,19 +133,25 @@ def create_ai(
                 f"api_keys.json 에 '{provider_lower}' 항목이 없습니다."
             )
 
-    api_key = keys[provider_lower].get("api_key", "")
+    provider_config = keys.get(provider_lower, {})
+    api_key = provider_config.get("api_key", "")
+    
     if not api_key or api_key.startswith("YOUR_"):
         if provider_lower not in _KEY_OPTIONAL_PROVIDERS and not dry_run:
             logger.warning(
                 "'%s' API 키가 설정되지 않았습니다. --dry-run 모드를 사용하세요.", provider
             )
 
+    # api_keys.json의 추가 설정(host 등)을 추출하여 kwargs와 병합
+    merged_kwargs = {k: v for k, v in provider_config.items() if k != "api_key"}
+    merged_kwargs.update(kwargs)
+
     ai_class = AI_REGISTRY[provider_lower]
     instance = ai_class(
         api_key=api_key, model=model,
         dry_run=dry_run, web_search=web_search,
         retry_count=retry_count, retry_delay=retry_delay,
-        **kwargs,
+        **merged_kwargs,
     )
 
     logger.debug(

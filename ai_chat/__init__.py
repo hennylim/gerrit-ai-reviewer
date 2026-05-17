@@ -9,6 +9,7 @@ ai_chat 패키지
     - claude   : Anthropic Claude (anthropic)
     - ollama   : Ollama 로컬 LLM (gemma4:e4b, llama3 등, SDK 불필요)
     - lmstudio : LM Studio 로컬 LLM (GGUF 모델, OpenAI 호환 API)
+    - lmx      : LMX AI (OpenAI 호환 API)
 
 빠른 사용 예시:
     from ai_chat import create_ai
@@ -25,6 +26,7 @@ from .openai_ai import OpenAIChat
 from .claude_ai import ClaudeAI
 from .ollama_ai    import OllamaAI
 from .lmstudio_ai  import LMStudioAI
+from .lmx_ai       import LmxAI
 from .ai_factory import create_ai, load_api_keys, list_providers
 
 __all__ = [
@@ -35,6 +37,7 @@ __all__ = [
     "ClaudeAI",
     "OllamaAI",
     "LMStudioAI",
+    "LmxAI",
     "create_ai",
     "load_api_keys",
     "list_providers",
