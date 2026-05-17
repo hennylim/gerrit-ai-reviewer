@@ -143,7 +143,11 @@ def create_ai(
             )
 
     # api_keys.json의 추가 설정(host 등)을 추출하여 kwargs와 병합
-    merged_kwargs = {k: v for k, v in provider_config.items() if k != "api_key"}
+    # `_comment` 등의 메타 키는 무시합니다.
+    merged_kwargs = {
+        k: v for k, v in provider_config.items() 
+        if k != "api_key" and not k.startswith("_")
+    }
     merged_kwargs.update(kwargs)
 
     ai_class = AI_REGISTRY[provider_lower]

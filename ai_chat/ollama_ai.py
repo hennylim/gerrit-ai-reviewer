@@ -349,6 +349,28 @@ class OllamaAI(BaseAI):
                 search_sources=search_sources,
             )
 
+        except urllib.error.HTTPError as e:
+            elapsed = time.time() - start_time
+            err_detail = ""
+            try:
+                err_data = json.loads(e.read().decode("utf-8"))
+                err_detail = err_data.get("error", "")
+            except Exception:
+                pass
+            
+            reason = getattr(e, "reason", str(e))
+            if err_detail:
+                err_msg = f"Ollama HTTP 오류 ({e.code}): {err_detail}"
+            else:
+                err_msg = f"Ollama 서버 연결 실패: {e.code} {reason}\n서버 주소: {self.host}"
+                
+            logger.error("Ollama HTTPError: %s", err_msg)
+            return ChatResponse(
+                prompt=prompt, answer="",
+                model=self.model, provider=self.provider_name,
+                error=err_msg, elapsed_seconds=elapsed,
+            )
+
         except urllib.error.URLError as e:
             elapsed = time.time() - start_time
             reason  = getattr(e, "reason", str(e))
@@ -410,7 +432,7 @@ class OllamaAI(BaseAI):
 
     # ── 모델 나열 메서드 ──────────────────────────────────────────────────
     @classmethod
-    def list_models(cls, host: str = DEFAULT_HOST) -> list[str]:
+    def list_models(cls, host: str = _DEFAULT_HOST) -> list[str]:
         """
         Ollama 서버에서 사용 가능한 모델 목록을 반환합니다.
 
@@ -421,11 +443,9 @@ class OllamaAI(BaseAI):
             모델명 리스트
         """
         try:
-            resp = requests.get(f"{host}/api/tags", timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            return [m["name"] for m in data.get("models", [])]
+            req = urllib.request.Request(f"{host}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return [m["name"] for m in data.get("models", [])]
         except Exception:
             return []
-
-    # 
