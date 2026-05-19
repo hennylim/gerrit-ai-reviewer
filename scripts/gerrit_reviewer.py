@@ -822,7 +822,7 @@ JSON 배열 외 다른 텍스트(설명, 마크다운 코드블록 등)는 절�
   "side": "RIGHT",
   "severity": "<CRITICAL|MAJOR|MINOR|INFO>",
   "category": "<Security|Bug|Performance|Style|Test|Design>",
-  "message": "<{language}로 작성. 문제 설명 + 수정 방법. 300자 이내>"
+  "message": "<{language}로 작성. 문제 설명 + 수정 방법 + 예시 코드. 300자 이내>"
 }}
 
 규칙:
