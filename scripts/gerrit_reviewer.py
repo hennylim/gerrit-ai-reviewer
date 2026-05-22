@@ -277,6 +277,34 @@ def _extract_added_lines(diff_content: str) -> list[int]:
 
     return result
 
+# 삭제된 줄(-)의 실제 파일 라인 번호를 추출
+def _extract_deleted_lines(diff_content: str) -> list[int]:
+    """
+    unified diff 에서 삭제된 줄(-)의 실제 파일 라인 번호를 추출합니다.
+    @@ -a,b +c,d @@ 헤더를 파싱해 라인 번호를 추적합니다.
+    """
+    import re
+    lines   = diff_content.splitlines()
+    result  = []
+    cur_old = 0   # 현재 OLD 파일 라인 번호
+
+    for line in lines:
+        hunk = re.match(r"^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@", line)
+        if hunk:
+            cur_old = int(hunk.group(1)) - 1
+            continue
+        if line.startswith("+++") or line.startswith("---"):
+            continue
+        if line.startswith("-"):
+            cur_old += 1
+            result.append(cur_old)
+        elif line.startswith("+"):
+            pass   # 추가 줄: OLD 파일 번호 증가 없음
+        else:
+            cur_old += 1   # 컨텍스트 줄
+
+    return result
+
 
 def _extract_json_text(raw: str) -> str:
     """
@@ -409,9 +437,16 @@ def _build_result(
       - 이를 통해 AI가 반환한 부정확한 라인 번호로 인해
         Gerrit 등록이 실패하거나 엉뚱한 라인에 코멘트가 달리는 문제를 방지합니다.
     """
+
     file_summary    = data.get("file_summary", "")
     raw_comments    = data.get("inline_comments", [])
     inline_comments = []
+
+    # 삭제줄 라인 목록도 추출
+    deleted_lines = None
+    if valid_new_lines is not None:
+        # valid_new_lines는 추가줄(+), deleted_lines는 삭제줄(-)
+        deleted_lines = _extract_deleted_lines(data.get("diff_content", "")) if "diff_content" in data else None
 
     for c in raw_comments:
         try:
@@ -429,19 +464,23 @@ def _build_result(
             if not message:
                 continue
 
-            # ── 라인 번호 검증 및 스냅 (REVISION side 전용) ──────────────────
+            # ── 라인 번호 검증 및 스냅 (REVISION/추가줄, PARENT/삭제줄 모두) ────────────────
             if side == "REVISION" and valid_new_lines:
                 snapped_line, was_snapped = _snap_to_valid_line(line, valid_new_lines)
                 if was_snapped:
                     logger.debug(
-                        "  라인 번호 보정 [%s]: %d → %d (AI 반환값이 추가된 줄 목록에 없음)",
+                        "  라인 번호 보정 [%s][REVISION]: %d → %d (AI 반환값이 추가된 줄 목록에 없음)",
                         filename, line, snapped_line,
                     )
                 line = snapped_line
-
-            #icon    = {"CRITICAL": "🔴", "MAJOR": "🟠", "MINOR": "🟡", "INFO": "🔵"}.get(severity, "⚪")
-            #cat_str = f"[{category}] " if category else ""
-            #formatted_msg = f"{icon} [{severity}] {cat_str}{message}"
+            elif side == "PARENT" and deleted_lines:
+                snapped_line, was_snapped = _snap_to_valid_line(line, deleted_lines)
+                if was_snapped:
+                    logger.debug(
+                        "  라인 번호 보정 [%s][PARENT]: %d → %d (AI 반환값이 삭제된 줄 목록에 없음)",
+                        filename, line, snapped_line,
+                    )
+                line = snapped_line
 
             inline_comments.append({
                 "line":     line,
